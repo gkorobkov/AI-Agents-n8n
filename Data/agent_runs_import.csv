@@ -1,0 +1,2 @@
+output_short,output_clean,agent_logic,parsed_object,parse_error,schema_warning,response_type,latency_ms,tools_used_json,intermediate_steps_summary,intermediate_steps_json,success
+"Краткий итог ответа","<b>Маршрут найден</b>","Agent used travel tools","{""mode"":""TICKETS""}","","","json",1842,"[""Geocode_HTTP_Request"",""Yandex_Rasp_Search_Trains_HTTP_Request_Tool""]","1. tool=Geocode_HTTP_Request | result=city found","[{""action"": {""tool"": ""Geocode_HTTP_Request""}}]",true
