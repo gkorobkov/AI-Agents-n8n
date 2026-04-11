@@ -1,17 +1,19 @@
 const items = $input.all();
-const sessionId = $json.sessionId; 
 
-let user_message_text = '';
-try { user_message_text = $('Set session key TG').first().json.user_message_text; } catch(e) {}
-if (!user_message_text) {
-  try { user_message_text = $('Set session key WH').first().json.user_message_text; } catch(e) {}
+function tryGet(nodeName, field) {
+  try { return $(nodeName).first().json[field]; } catch(e) { return ''; }
 }
 
-let message_source = '';
-try { message_source = $('Set session key TG').first().json.message_source; } catch(e) {}
-if (!message_source) {
-  try { message_source = $('Set session key WH').first().json.message_source; } catch(e) {}
-}
+const user_message_text = tryGet('Set session key TG', 'user_message_text') 
+                       || tryGet('Set session key WH', 'user_message_text');
+
+const message_source    = tryGet('Set session key TG', 'message_source') 
+                       || tryGet('Set session key WH', 'message_source');
+
+const sessionId         = tryGet('Set session key TG', 'sessionId') 
+                       || tryGet('Set session key WH', 'sessionId');
+
+
 
 const byKey = new Map();
 for (const it of items) {
@@ -29,23 +31,14 @@ for (const it of items) {
     });
   }
 }
+
 const chat_history = {};
 for (const [key, rec] of byKey.entries()) {
   chat_history[key] = String(rec.value ?? "");
 }
+
 const ts_start_ms = Date.now();
 const trace_id = `trc_${ts_start_ms}_${Math.floor(Math.random() * 100000)}`;
 const ts = new Date(ts_start_ms).toISOString();
-return [
-  {
-    json: {
-      chat_history,
-      sessionId,
-      message_source,
-      user_message_text,
-      trace_id,
-      ts,
-      ts_start_ms,
-    },
-  },
-];
+
+return [{ json: { chat_history, sessionId, message_source, user_message_text, trace_id, ts, ts_start_ms } }];
