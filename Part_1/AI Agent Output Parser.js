@@ -9,6 +9,7 @@ const DEBUG_JSON_MAX_LEN = 1800;
 const DEBUG_JSON_MID_LEN = 1200;
 const DEBUG_JSON_MIN_LEN = 700;
 
+
 const raw = String($json.output ?? "").trim();
 
 let obj = null;
@@ -330,6 +331,8 @@ if (output_clean.length > TELEGRAM_SOFT_LIMIT) {
 return [
  {
  ...$json,
+ user_message_text: $('JSON Chat Memory').first().json.user_message_text,
+sessionId: $('JSON Chat Memory').first().json.sessionId,
  output_short: shortenText(output_clean, 300),
  output_clean,
 
