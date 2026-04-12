@@ -524,8 +524,10 @@ const i18n = {
     errNetwork:         'Network Error',
     errParse:           'Parse Error',
     errEmpty:           'Empty Response',
+    errTimeout:         'Timeout',
     errParseMsg:        'Failed to parse server response',
     errEmptyMsg:        'Agent returned an empty reply',
+    errTimeoutMsg:      'No response in 6 minutes. The agent may still be running — try again.',
     chatClearedTitle:   'Chat Cleared',
     chatClearedSub:     'Start a new conversation',
   },
@@ -550,8 +552,10 @@ const i18n = {
     errNetwork:         'Ошибка сети',
     errParse:           'Ошибка парсинга',
     errEmpty:           'Пустой ответ',
+    errTimeout:         'Таймаут',
     errParseMsg:        'Не удалось разобрать ответ сервера',
     errEmptyMsg:        'Агент вернул пустой ответ',
+    errTimeoutMsg:      'Ответ не получен за 6 минут. Агент может всё ещё работать — попробуй ещё раз.',
     chatClearedTitle:   'Чат очищен',
     chatClearedSub:     'Начни новый разговор',
   }
@@ -757,12 +761,17 @@ async function sendMessage() {
   document.getElementById('status-dot').className = 'status-dot thinking';
   showTyping();
 
+  const abortCtrl = new AbortController();
+  const timeoutId = setTimeout(() => abortCtrl.abort(), 6 * 60 * 1000);
+
   try {
     const res = await fetch(webhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: text, sessionId })
+      body: JSON.stringify({ message: text, sessionId }),
+      signal: abortCtrl.signal
     });
+    clearTimeout(timeoutId);
     hideTyping();
 
     if (!res.ok) {
@@ -786,8 +795,10 @@ async function sendMessage() {
     else appendError(t('errEmptyMsg'), 'errEmpty');
 
   } catch(err) {
+    clearTimeout(timeoutId);
     hideTyping();
-    appendError(err.message, 'errNetwork');
+    const isTimeout = err.name === 'AbortError';
+    appendError(isTimeout ? t('errTimeoutMsg') : err.message, isTimeout ? 'errTimeout' : 'errNetwork');
   } finally {
     isThinking = false;
     document.getElementById('send-btn').disabled = false;

@@ -48,55 +48,22 @@ function parseJsonMaybe(value) {
 
 // ─── Intermediate steps ───────────────────────────────────────────────────────
 
-function getToolArgs(step) {
-  const fromLog = step?.action?.messageLog?.[0]?.kwargs?.tool_calls?.[0]?.args;
-  return (fromLog && typeof fromLog === "object") ? fromLog
-       : (step?.action?.toolInput && typeof step.action.toolInput === "object") ? step.action.toolInput
-       : {};
-}
-
-function summarizeObservation(step) {
-  const parsed = parseJsonMaybe(step?.observation);
-  const item = Array.isArray(parsed) ? parsed[0] : parsed;
-
-  if (!item || typeof item !== "object") {
-    return shortenText(String(step?.observation ?? ""), 120, "...");
-  }
-  if (item.field_key != null) return `saved ${item.field_key}=${item.field_value ?? ""}`;
-
-  const b = item.body;
-  if (b && typeof b === "object") {
-    if (Array.isArray(b.results) && b.results[0]) {
-      const c = b.results[0];
-      return `city=${c.name ?? ""}; lat=${c.latitude ?? ""}; lon=${c.longitude ?? ""}`;
-    }
-    if (b.type === "settlement") {
-      return `settlement=${b.title ?? ""}; code=${b.code ?? ""}; lat=${b.lat ?? ""}; lng=${b.lng ?? ""}`;
-    }
-    if (b.search && Array.isArray(b.segments)) {
-      return `route=${b.search?.from?.title ?? ""}->${b.search?.to?.title ?? ""}; date=${b.search?.date ?? ""}; trains=${b.segments.length}; first_train=${b.segments[0]?.thread?.number ?? ""}`;
-    }
-    if (Array.isArray(b.data) && b.data[0]) {
-      const prices = b.data.map((d) => Number(d?.price)).filter(Number.isFinite);
-      const f = b.data[0];
-      return `route=${f.origin ?? ""}->${f.destination ?? ""}; date=${String(f.departure_at ?? "").slice(0, 10)}; flights=${b.data.length}; min_price=${prices.length ? Math.min(...prices) : ""}`;
-    }
-  }
-  return shortenText(safeStringify(item), 120, "...");
-}
-
 function buildStepsSummary(steps) {
   if (!steps.length) return "No intermediate steps";
   const seen = new Set();
   const lines = [];
   for (const step of steps) {
-    const tool = String(step?.action?.tool ?? "Unknown Tool").trim();
-    const args = getToolArgs(step);
-    const result = summarizeObservation(step);
-    const key = `${tool}|${JSON.stringify({ ...args, id: undefined })}|${result}`;
+    const callId = step?.action?.toolCallId || '';
+    const key = callId || `step_${lines.length}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    lines.push(`${lines.length + 1}. tool=${tool} | args=${JSON.stringify(args)} | result=${result}`);
+
+    const toolCall = step?.action?.messageLog?.[0]?.kwargs?.tool_calls?.[0];
+    const toolName = toolCall?.name || step?.action?.tool || "Unknown Tool";
+    const args = Object.fromEntries(
+      Object.entries(toolCall?.args || {}).filter(([k]) => k !== "id")
+    );
+    lines.push(`${lines.length + 1}. tool=${toolName} | args=${JSON.stringify(args)}`);
   }
   return lines.join("\n");
 }
@@ -138,7 +105,10 @@ const now = Date.now();
 const latency_ms = Math.max(0, now - Number(chatMemory.ts_start_ms || now));
 const intermediateSteps = (() => { const p = parseJsonMaybe($json.intermediateSteps); return Array.isArray(p) ? p : []; })();
 const intermediate_steps_summary = buildStepsSummary(intermediateSteps);
+const chatHistory = $('JSON Chat Memory').first().json.chat_history || {};
 const success = response_type === "json" && !parse_error && Boolean(reply_html);
+
+const isWebhook = String($json.message_source ?? "").toUpperCase() === "WH";
 
 // ─── Build output with cascading size limits ──────────────────────────────────
 
@@ -149,7 +119,13 @@ function buildOutput(maxLen = 0, includeAgentLogic = true) {
   if (schema_warning) blocks.push(withFormat("[debug] schema_warning", schema_warning));
   if (includeAgentLogic) {
     blocks.push(withFormat("Agent Logic", agent_logic, maxLen));
-    blocks.push(withFormat("Tools used", intermediate_steps_summary, maxLen));
+    if (intermediate_steps_summary) {
+      const stepsText = maxLen > 0 ? shortenText(intermediate_steps_summary, maxLen) : intermediate_steps_summary;
+      blocks.push(`<b>Tools used</b>\n${escHtml(stepsText)}`);
+    }
+    if (Object.keys(chatHistory).length > 0) {
+      blocks.push(withFormat("Chat History", chatHistory, maxLen));
+    }
   }
   return blocks.filter(Boolean).join("\n\n");
 }
@@ -162,10 +138,12 @@ const candidates = [
   null,
 ];
 
-const output_clean = candidates.reduce((acc, p) =>
-  acc.length <= TELEGRAM_SOFT_LIMIT ? acc : (p ? buildOutput(...p) : body),
-  buildOutput(DEBUG_JSON_MAX_LEN, true)
-);
+const output_clean = isWebhook
+  ? buildOutput(0, true)
+  : candidates.reduce((acc, p) =>
+      acc.length <= TELEGRAM_SOFT_LIMIT ? acc : (p ? buildOutput(...p) : body),
+      buildOutput(DEBUG_JSON_MAX_LEN, true)
+    );
 
 // ─── Return ───────────────────────────────────────────────────────────────────
 
