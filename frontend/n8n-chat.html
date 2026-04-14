@@ -762,7 +762,7 @@ async function sendMessage() {
   showTyping();
 
   const abortCtrl = new AbortController();
-  const timeoutId = setTimeout(() => abortCtrl.abort(), 6 * 60 * 1000);
+  const timeoutId = setTimeout(() => abortCtrl.abort(), 10* 60 * 1000);
 
   try {
     const res = await fetch(webhookUrl, {

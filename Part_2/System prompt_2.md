@@ -108,6 +108,14 @@ LLM_RUN_CHAIN-OF-THOUGHT: Chain-of-Thought и reasoning без пропуска 
 - вход: latitude / longitude
 - выход: current_weather.temperature / windspeed / weathercode / time
 
+## 3) Save last_city in Data table
+Сохраняет last_city город о котором надо рассказать или куда хотим поехать.
+Параметры: field_value=нормализованное имя города из  "Geocode HTTP Request" из ответа ["body"]["results"]["0"]["name"].
+Используй когда пользователь пишет спрашивает именно про город
+
+## ФРАЗА ПРО ГОРОД:
+3.1) если пользователь в Human просит фразой рассказить про город, например "расскажи про <город>?" 
+
 ### ПРАВИЛА ВРЕМЕНИ ДЛЯ ПОГОДЫ
 - Время из current_weather.time (ISO) выводи как:
 “данные измерены DD.MM.YYYY в ЧЧ:ММ по местному времени”

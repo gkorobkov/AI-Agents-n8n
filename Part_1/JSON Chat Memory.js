@@ -1,19 +1,9 @@
 const items = $input.all();
 
-function tryGet(nodeName, field) {
-  try { return $(nodeName).first().json[field]; } catch(e) { return ''; }
-}
-
-const user_message_text = tryGet('Set session key TG', 'user_message_text') 
-                       || tryGet('Set session key WH', 'user_message_text');
-
-const message_source    = tryGet('Set session key TG', 'message_source') 
-                       || tryGet('Set session key WH', 'message_source');
-
-const sessionId         = tryGet('Set session key TG', 'sessionId') 
-                       || tryGet('Set session key WH', 'sessionId');
-
-
+const nodeSession = $('Get sessionId').first().json;
+const user_message_text = nodeSession['user_message_text'];
+const message_source    = nodeSession['message_source'];
+const sessionId         = nodeSession['sessionId'];
 
 const byKey = new Map();
 for (const it of items) {
@@ -41,4 +31,9 @@ const ts_start_ms = Date.now();
 const trace_id = `trc_${ts_start_ms}_${Math.floor(Math.random() * 100000)}`;
 const ts = new Date(ts_start_ms).toISOString();
 
-return [{ json: { chat_history, sessionId, message_source, user_message_text, trace_id, ts, ts_start_ms } }];
+return [{ json: { 
+  chat_history, 
+  sessionId : sessionId, 
+  user_message_text,
+  message_source,
+  trace_id, ts, ts_start_ms } }];
