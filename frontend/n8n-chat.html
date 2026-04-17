@@ -790,9 +790,16 @@ async function sendMessage() {
 
     if (Array.isArray(data)) data = data[0];
 
-    const reply = data?.output_clean || data?.output || data?.text || data?.message || '';
-    if (reply) appendMessage('agent', reply);
-    else appendError(t('errEmptyMsg'), 'errEmpty');
+    const reply = data?.output_clean || data?.output || data?.text || data?.message;
+    if (reply) {
+      appendMessage('agent', reply);
+    } else if (data && typeof data === 'object' && Object.keys(data).length > 0) {
+      const jsonStr = JSON.stringify(data, null, 2)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      appendMessage('agent', `<pre>${jsonStr}</pre>`);
+    } else {
+      appendError(t('errEmptyMsg'), 'errEmpty');
+    }
 
   } catch(err) {
     clearTimeout(timeoutId);
