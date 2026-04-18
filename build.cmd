@@ -11,14 +11,21 @@ set BUILD_DIR=%ROOT%.build
 
 if "!QUIET!"=="0" echo Build root: !ROOT!
 
-:: Frontend
+:: Frontend — increment APP_VERSION build number
+set FRONTEND_SRC=!ROOT!frontend\index.html
 set FRONTEND_DST=!BUILD_DIR!\frontend\index.html
 if not exist "!BUILD_DIR!\frontend" mkdir "!BUILD_DIR!\frontend"
 
-copy /Y "!ROOT!frontend\n8n-chat.html" "!FRONTEND_DST!" >nul
+powershell -NoProfile -Command "$f='!FRONTEND_SRC!'; $c=[IO.File]::ReadAllText($f); if ($c -match 'APP_VERSION = ''([\d]+\.[\d]+\.)([\d]+)''') { $old=$Matches[0]; $new='APP_VERSION = ''' + $Matches[1] + ([int]$Matches[2]+1) + ''''; [IO.File]::WriteAllText($f, $c.Replace($old,$new)) }"
 if errorlevel 1 (
-    echo ERROR: Failed to copy frontend\n8n-chat.html
+    echo ERROR: Failed to increment APP_VERSION
     exit /b 1
 )
 
-if "!QUIET!"=="0" echo [OK] Copying .\frontend\n8n-chat.html --^> .\.build\frontend\index.html
+copy /Y "!FRONTEND_SRC!" "!FRONTEND_DST!" >nul
+if errorlevel 1 (
+    echo ERROR: Failed to copy frontend\index.html
+    exit /b 1
+)
+
+if "!QUIET!"=="0" echo [OK] Copying .\frontend\index.html --^> .\.build\frontend\index.html
