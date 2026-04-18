@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy / Политика конфиденциальности — AI Agent Chat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Sora:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #12151d;
+    --surface: #1a1e2c;
+    --surface2: #222740;
+    --border: #303754;
+    --accent: #4fffb0;
+    --accent2: #00c8ff;
+    --accent-dim: rgba(79,255,176,0.12);
+    --text: #edf2ff;
+    --text-muted: #8898b8;
+    --font-mono: 'JetBrains Mono', monospace;
+    --font-ui: 'Sora', sans-serif;
+    --radius: 14px;
+    --shadow: rgba(0,0,0,0.4);
+  }
+  html[data-theme="light"] {
+    --bg: #eef1f9;
+    --surface: #ffffff;
+    --surface2: #f2f5fc;
+    --border: #c4cfea;
+    --accent: #00a86b;
+    --accent2: #0090c8;
+    --accent-dim: rgba(0,168,107,0.1);
+    --text: #1a2033;
+    --text-muted: #6b7a99;
+    --shadow: rgba(0,0,0,0.1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-ui);
+    min-height: 100vh;
+    transition: background 0.3s, color 0.3s;
+  }
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .logo {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .lang-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-family: var(--font-mono);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .lang-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-dim);
+  }
+  .theme-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .theme-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+  main {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+  .page { display: none; }
+  .page.active { display: block; }
+  h1 {
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+  .subtitle {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    margin-bottom: 40px;
+  }
+  h2 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--accent2);
+    margin: 32px 0 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  p {
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+  ul {
+    margin: 8px 0 12px 20px;
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--text);
+  }
+  li { margin-bottom: 4px; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+  .updated {
+    font-size: 12px;
+    font-family: var(--font-mono);
+    color: var(--text-muted);
+    margin-top: 48px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--text-muted);
+    text-decoration: none;
+    margin-bottom: 32px;
+    transition: color 0.2s;
+  }
+  .back-link:hover { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+<header>
+  <a href="index.html" class="logo">◈ AI Agent Chat</a>
+  <div class="controls">
+    <button class="lang-btn active" id="btn-ru" onclick="setLang('ru')">RU</button>
+    <button class="lang-btn" id="btn-en" onclick="setLang('en')">EN</button>
+    <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme">◑</button>
+  </div>
+</header>
+
+<main>
+
+<!-- RUSSIAN -->
+<div class="page active" id="page-ru">
+  <a href="index.html" class="back-link">← Назад к чату</a>
+  <h1>Политика конфиденциальности</h1>
+  <div class="subtitle">AI Agent Chat &nbsp;·&nbsp; Последнее обновление: апрель 2026</div>
+
+  <div class="card">
+    <p>Настоящая Политика конфиденциальности описывает, как AI Agent Chat («мы», «сервис») обрабатывает информацию при использовании приложения.</p>
+  </div>
+
+  <h2>1. Какие данные мы собираем</h2>
+  <p>При работе с сервисом могут собираться следующие данные:</p>
+  <ul>
+    <li>Содержимое сообщений, отправляемых в чат (текст запросов и ответов).</li>
+    <li>Технические данные: IP-адрес, тип браузера, операционная система, дата и время обращений.</li>
+    <li>Файлы, загружаемые пользователем в рамках сессии (если применимо).</li>
+    <li>Настройки и предпочтения, сохранённые в браузере (localStorage).</li>
+  </ul>
+
+  <h2>2. Как мы используем данные</h2>
+  <ul>
+    <li>Для обработки запросов и формирования ответов через AI-модели (Anthropic Claude и другие).</li>
+    <li>Для обеспечения работоспособности и безопасности сервиса.</li>
+    <li>Для улучшения качества и функциональности приложения.</li>
+    <li>Для соблюдения требований законодательства.</li>
+  </ul>
+
+  <h2>3. Передача данных третьим сторонам</h2>
+  <p>Ваши сообщения могут передаваться поставщикам AI-моделей (в частности, Anthropic) для генерации ответов. На эти данные распространяется политика конфиденциальности соответствующих поставщиков. Мы не продаём и не передаём ваши данные рекламным или иным третьим сторонам.</p>
+
+  <h2>4. Хранение данных</h2>
+  <p>История диалогов хранится локально в браузере пользователя (localStorage) и не передаётся на сервер, если иное не предусмотрено конфигурацией. Серверные логи хранятся не более 90 дней.</p>
+
+  <h2>5. Права пользователя</h2>
+  <ul>
+    <li>Вы можете очистить историю чата в любое время через интерфейс приложения.</li>
+    <li>Вы вправе запросить удаление ваших данных, написав на <a href="mailto:gkorobkov@gmail.com">gkorobkov@gmail.com</a>.</li>
+    <li>Вы можете отказаться от использования сервиса в любой момент.</li>
+  </ul>
+
+  <h2>6. Безопасность</h2>
+  <p>Мы принимаем разумные технические меры для защиты ваших данных, однако ни одна система передачи данных через интернет не является абсолютно защищённой.</p>
+
+  <h2>7. Использование файлов cookie</h2>
+  <p>Приложение использует localStorage браузера для хранения пользовательских настроек и истории. Сторонние cookie не используются.</p>
+
+  <h2>8. Контакты</h2>
+  <p>По вопросам, связанным с конфиденциальностью, обращайтесь: <a href="mailto:gkorobkov@gmail.com">gkorobkov@gmail.com</a></p>
+
+  <div class="updated">Дата последнего обновления: 18 апреля 2026 г.</div>
+</div>
+
+<!-- ENGLISH -->
+<div class="page" id="page-en">
+  <a href="index.html" class="back-link">← Back to Chat</a>
+  <h1>Privacy Policy</h1>
+  <div class="subtitle">AI Agent Chat &nbsp;·&nbsp; Last updated: April 2026</div>
+
+  <div class="card">
+    <p>This Privacy Policy describes how AI Agent Chat ("we", "the service") handles information when you use the application.</p>
+  </div>
+
+  <h2>1. Data We Collect</h2>
+  <p>When using the service, the following data may be collected:</p>
+  <ul>
+    <li>Content of messages sent in the chat (text of requests and responses).</li>
+    <li>Technical data: IP address, browser type, operating system, date and time of requests.</li>
+    <li>Files uploaded by the user during a session (if applicable).</li>
+    <li>Settings and preferences stored in the browser (localStorage).</li>
+  </ul>
+
+  <h2>2. How We Use Data</h2>
+  <ul>
+    <li>To process requests and generate responses via AI models (Anthropic Claude and others).</li>
+    <li>To ensure the reliability and security of the service.</li>
+    <li>To improve the quality and functionality of the application.</li>
+    <li>To comply with legal requirements.</li>
+  </ul>
+
+  <h2>3. Sharing Data with Third Parties</h2>
+  <p>Your messages may be forwarded to AI model providers (in particular, Anthropic) in order to generate responses. These data are subject to the respective providers' privacy policies. We do not sell or share your data with advertisers or other third parties.</p>
+
+  <h2>4. Data Retention</h2>
+  <p>Chat history is stored locally in the user's browser (localStorage) and is not sent to the server unless the configuration requires it. Server logs are retained for no more than 90 days.</p>
+
+  <h2>5. Your Rights</h2>
+  <ul>
+    <li>You may clear your chat history at any time through the application interface.</li>
+    <li>You may request deletion of your data by writing to <a href="mailto:gkorobkov@gmail.com">gkorobkov@gmail.com</a>.</li>
+    <li>You may stop using the service at any time.</li>
+  </ul>
+
+  <h2>6. Security</h2>
+  <p>We take reasonable technical measures to protect your data; however, no data transmission system over the internet is completely secure.</p>
+
+  <h2>7. Cookies</h2>
+  <p>The application uses browser localStorage to store user settings and history. No third-party cookies are used.</p>
+
+  <h2>8. Contact</h2>
+  <p>For privacy-related inquiries, contact: <a href="mailto:gkorobkov@gmail.com">gkorobkov@gmail.com</a></p>
+
+  <div class="updated">Last updated: April 18, 2026</div>
+</div>
+
+</main>
+
+<script>
+  function setLang(lang) {
+    document.getElementById('page-ru').classList.toggle('active', lang === 'ru');
+    document.getElementById('page-en').classList.toggle('active', lang === 'en');
+    document.getElementById('btn-ru').classList.toggle('active', lang === 'ru');
+    document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+    document.documentElement.lang = lang;
+  }
+  function toggleTheme() {
+    const html = document.documentElement;
+    html.setAttribute('data-theme', html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  }
+</script>
+</body>
+</html>

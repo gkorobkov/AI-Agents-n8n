@@ -79,11 +79,20 @@
     width: 26px; height: 26px;
     border-radius: 50%;
     border: 1.5px solid var(--accent);
+    background: transparent;
     display: flex; align-items: center; justify-content: center;
     box-shadow: 0 0 8px rgba(79,255,176,0.3);
     flex-shrink: 0;
     color: var(--accent);
+    cursor: pointer;
+    transition: box-shadow 0.2s, border-color 0.2s;
+    padding: 0;
   }
+  .logo-ring:hover {
+    box-shadow: 0 0 16px rgba(79,255,176,0.6);
+    border-color: var(--accent);
+  }
+  .logo-ring.active { box-shadow: 0 0 16px rgba(79,255,176,0.6); }
   .logo-ring svg { width: 13px; height: 13px; stroke: var(--accent); }
 
   .header-title {
@@ -107,11 +116,13 @@
     transition: border-color 0.2s, color 0.2s, box-shadow 0.2s;
     min-width: 0;
   }
-  #webhook-url:focus { border-color: var(--accent); color: var(--text); box-shadow: 0 0 0 2px rgba(79,255,176,0.1); }
+  #webhook-url::placeholder { color: var(--accent2); opacity: 0.75; }
+  #webhook-url { border-color: rgba(0,200,255,0.45); box-shadow: 0 0 0 2px rgba(0,200,255,0.08); }
+  #webhook-url:focus { border-color: var(--accent2); color: var(--text); box-shadow: 0 0 0 2px rgba(0,200,255,0.15); }
   #webhook-url.has-value {
-    color: var(--accent2);
-    border-color: rgba(0,200,255,0.5);
-    box-shadow: 0 0 0 2px rgba(0,200,255,0.09), 0 0 8px rgba(0,200,255,0.12);
+    color: var(--accent);
+    border-color: rgba(79,255,176,0.55);
+    box-shadow: 0 0 0 2px rgba(79,255,176,0.1), 0 0 8px rgba(79,255,176,0.12);
     font-weight: 500;
   }
 
@@ -158,7 +169,7 @@
   .icon-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
   .icon-btn svg { width: 14px; height: 14px; }
 
-  /* Language toggle button */
+  /* Language quick button (header) */
   .lang-btn {
     background: transparent;
     border: 1px solid var(--border);
@@ -189,45 +200,112 @@
 
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-  /* ── SETTINGS PANEL (шторка) ── */
-  #settings-panel {
-    overflow: hidden;
-    max-height: 0;
-    background: var(--panel-bg);
-    border-bottom: 1px solid transparent;
-    position: relative; z-index: 9;
-    transition: background 0.3s, max-height 0.35s cubic-bezier(0.4,0,0.2,1), border-color 0.35s;
+  /* ── DRAWER OVERLAY ── */
+  #drawer-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0);
+    z-index: 40;
+    pointer-events: none;
+    transition: background 0.3s;
   }
-  #settings-panel.open {
-    max-height: 72px;
-    border-bottom-color: var(--border);
+  #drawer-overlay.visible {
+    background: rgba(0,0,0,0.52);
+    pointer-events: all;
   }
-  .settings-inner {
-    padding: 10px 16px;
+
+  /* ── SIDE DRAWER ── */
+  #drawer {
+    position: fixed;
+    top: 0; left: 0;
+    width: 300px; height: 100%;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    z-index: 50;
     display: flex;
-    gap: 24px;
-    align-items: center;
+    flex-direction: column;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), background 0.3s, border-color 0.3s;
+    overflow-y: auto;
   }
-  .settings-label {
+  #drawer::-webkit-scrollbar { width: 3px; }
+  #drawer::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  #drawer.open { transform: translateX(0); }
+
+  .drawer-header {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .drawer-logo {
+    display: flex; align-items: center; gap: 9px;
+  }
+  .drawer-logo-ring {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    border: 1.5px solid var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 7px rgba(79,255,176,0.28);
+    flex-shrink: 0;
+  }
+  .drawer-logo-ring svg { width: 11px; height: 11px; stroke: var(--accent); }
+  .drawer-logo-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .drawer-close {
+    width: 26px; height: 26px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color 0.2s, color 0.2s;
+    flex-shrink: 0;
+  }
+  .drawer-close:hover { border-color: var(--error); color: var(--error); }
+  .drawer-close svg { width: 12px; height: 12px; }
+
+  .drawer-section {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .drawer-section:last-child { border-bottom: none; }
+
+  .drawer-section-title {
+    font-size: 9px;
+    font-family: var(--font-mono);
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+  }
+
+  /* Setting row inside drawer */
+  .d-setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .d-setting-row:last-child { margin-bottom: 0; }
+  .d-setting-label {
+    font-size: 13px;
+    color: var(--text);
+    font-family: var(--font-ui);
+    cursor: default;
+  }
+  .d-setting-label small {
+    display: block;
     font-size: 10px;
     color: var(--text-muted);
     font-family: var(--font-mono);
-    font-weight: 600;
-    letter-spacing: 0.8px;
-    text-transform: uppercase;
-    flex-shrink: 0;
-  }
-  .setting-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .setting-row span {
-    font-size: 12px;
-    color: var(--text);
-    font-family: var(--font-mono);
-    cursor: pointer;
-    user-select: none;
+    margin-top: 1px;
   }
 
   /* Toggle switch */
@@ -248,6 +326,88 @@
   }
   .switch input:checked + .slider { background: var(--accent); }
   .switch input:checked + .slider::before { transform: translateX(15px); }
+
+  /* Segmented control (lang / theme) */
+  .seg-ctrl {
+    display: flex;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .seg-btn {
+    flex: 1;
+    padding: 5px 12px;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s;
+    white-space: nowrap;
+  }
+  .seg-btn.active {
+    background: var(--accent-dim);
+    color: var(--accent);
+  }
+  .seg-btn + .seg-btn {
+    border-left: 1px solid var(--border);
+  }
+
+  /* About section */
+  .about-version {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--accent);
+    background: var(--accent-dim);
+    border: 1px solid rgba(79,255,176,0.3);
+    border-radius: 20px;
+    padding: 2px 10px;
+    margin-bottom: 10px;
+  }
+  .about-desc {
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+  .about-meta {
+    font-size: 10px;
+    font-family: var(--font-mono);
+    color: var(--text-muted);
+    opacity: 0.65;
+  }
+  .about-meta a { color: var(--accent2); text-decoration: none; }
+  .about-meta a:hover { text-decoration: underline; }
+
+  /* Legal links */
+  .drawer-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 13px;
+    border-bottom: 1px solid var(--border);
+    transition: color 0.2s;
+  }
+  .drawer-link:last-child { border-bottom: none; padding-bottom: 0; }
+  .drawer-link:hover { color: var(--accent); }
+  .drawer-link svg { width: 14px; height: 14px; flex-shrink: 0; color: var(--text-muted); }
+  .drawer-link:hover svg { color: var(--accent); }
+  .drawer-link-arrow {
+    margin-left: auto;
+    color: var(--text-muted);
+    font-size: 10px;
+    transition: transform 0.2s;
+  }
+  .drawer-link:hover .drawer-link-arrow { transform: translateX(3px); }
 
   /* ── MESSAGES ── */
   #messages {
@@ -361,7 +521,7 @@
   .error-header svg { flex-shrink: 0; }
   .error-msg { color: var(--text-muted); font-size: 12px; line-height: 1.5; }
 
-  .welcome { text-align:center; padding:40px 20px; opacity:.45; }
+  .welcome { text-align:center; padding:40px 20px; opacity:.85; }
   .welcome-icon { font-size:38px; margin-bottom:12px; }
   .welcome h2 { font-size:16px; font-weight:600; margin-bottom:4px; }
   .welcome p { font-size:12px; color:var(--text-muted); font-family:var(--font-mono); }
@@ -421,9 +581,11 @@
     background:var(--surface2); border:1px solid var(--accent);
     color:var(--accent); font-family:var(--font-mono); font-size:11px;
     padding:6px 14px; border-radius:20px;
-    opacity:0; transition:opacity .3s,transform .3s; pointer-events:none; z-index:100;
+    opacity:0; transition:opacity .25s,transform .25s; pointer-events:none; z-index:100;
   }
   #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  #toast.anchored { bottom:auto; transform:translateX(-50%) translateY(calc(-100% + 8px)); }
+  #toast.anchored.show { opacity:1; transform:translateX(-50%) translateY(calc(-100% - 8px)); }
 
   /* Resend button */
   .resend-btn {
@@ -446,60 +608,146 @@
 <body>
 
 <header>
-  <div class="logo-ring">
+  <button class="logo-ring" id="burger-btn" onclick="toggleDrawer()" title="Menu">
     <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
       <path d="M12 2L2 7l10 5 10-5-10-5z"/>
       <path d="M2 17l10 5 10-5"/>
       <path d="M2 12l10 5 10-5"/>
     </svg>
-  </div>
-  <span class="header-title" id="app-title">AI Agent</span>
-  <input id="webhook-url" type="text" placeholder="https://your-n8n.com/webhook/…" />
-  <div id="session-id-box">🔑 <span id="sid-display"></span></div>
-  <button class="cfg-btn" id="btn-new-session" onclick="resetSession()" data-i18n="btnNewSession">New Session</button>
-  <button class="cfg-btn" id="btn-clear" onclick="clearChat()" data-i18n="btnClear">Clear</button>
-
-  <!-- Settings toggle -->
-  <button class="icon-btn" id="settings-btn" onclick="toggleSettings()" data-i18n-title="titleSettings" title="Settings">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="12" cy="12" r="3"/>
-      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-    </svg>
   </button>
+  <span class="header-title" id="app-title">AI Agent</span>
+  <input id="webhook-url" type="text" placeholder="https://your-n8n.com/webhook/…  · Paste Webhook URL to start" />
+  <div id="session-id-box" onclick="copySession(this)" style="cursor:pointer">🔑 <span id="sid-display"></span></div>
+  <button class="cfg-btn" id="btn-new-session" onclick="resetSession(this)" data-i18n="btnNewSession">New Session</button>
+  <button class="cfg-btn" id="btn-clear" onclick="clearChat(this)" data-i18n="btnClear">Clear</button>
+  <div class="status-dot" id="status-dot"></div>
 
-  <!-- Theme toggle -->
-  <button class="icon-btn" id="theme-btn" onclick="toggleTheme()" data-i18n-title="titleTheme" title="Toggle theme">
+  <!-- Theme toggle (right) -->
+  <button class="icon-btn" id="theme-btn" onclick="applyTheme(theme === 'dark' ? 'light' : 'dark')" data-i18n-title="titleTheme" title="Toggle theme">
     <svg id="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
     </svg>
   </button>
 
-  <!-- Language toggle -->
+  <!-- Language toggle (right) -->
   <button class="lang-btn" id="lang-btn" onclick="toggleLang()" data-i18n-title="titleLang" title="Switch language">
-    <span id="lang-label">РУ</span>
+    <span id="lang-label">EN</span>
   </button>
-
-  <div class="status-dot" id="status-dot"></div>
 </header>
 
-<!-- Settings panel (шторка) -->
-<div id="settings-panel">
-  <div class="settings-inner">
-    <span class="settings-label" data-i18n="settingsLabel">Настройки</span>
-    <div class="setting-row">
+<!-- Overlay -->
+<div id="drawer-overlay" onclick="closeDrawer()"></div>
+
+<!-- Side drawer -->
+<div id="drawer">
+
+  <div class="drawer-header">
+    <button class="drawer-close" onclick="closeDrawer()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+    <div class="drawer-logo">
+      <div class="drawer-logo-ring">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+          <path d="M2 17l10 5 10-5"/>
+          <path d="M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+      <span class="drawer-logo-title" id="drawer-title">Menu</span>
+    </div>
+  </div>
+
+  <!-- Settings -->
+  <div class="drawer-section">
+    <div class="drawer-section-title" data-i18n="drawerSettings">Settings</div>
+
+    <div class="d-setting-row">
+      <div class="d-setting-label" data-i18n="drawerLang">Language</div>
+      <div class="seg-ctrl">
+        <button class="seg-btn" id="seg-ru" onclick="applyLang('ru')">RU</button>
+        <button class="seg-btn" id="seg-en" onclick="applyLang('en')">EN</button>
+      </div>
+    </div>
+
+    <div class="d-setting-row">
+      <div class="d-setting-label" data-i18n="drawerTheme">Theme</div>
+      <div class="seg-ctrl">
+        <button class="seg-btn" id="seg-dark" onclick="applyTheme('dark')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:11px;height:11px;vertical-align:-1px;margin-right:4px"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><span data-i18n="drawerThemeDark">Dark</span>
+        </button>
+        <button class="seg-btn" id="seg-light" onclick="applyTheme('light')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:11px;height:11px;vertical-align:-1px;margin-right:4px"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg><span data-i18n="drawerThemeLight">Light</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="d-setting-row">
+      <div class="d-setting-label">
+        <span data-i18n="settingShowErrors">Show errors in chat</span>
+      </div>
       <label class="switch">
         <input type="checkbox" id="toggle-errors" checked onchange="onToggleErrors(this.checked)">
         <span class="slider"></span>
       </label>
-      <span id="label-show-errors" data-i18n="settingShowErrors" onclick="document.getElementById('toggle-errors').click()">Показывать ошибки в чате</span>
     </div>
   </div>
+
+  <!-- About -->
+  <div class="drawer-section">
+    <div class="drawer-section-title" data-i18n="drawerAbout">About</div>
+    <span class="about-version" id="about-version">v0.1.5</span>
+    <p class="about-desc" data-i18n="drawerAboutDesc">
+      Web interface for AI agents built on n8n workflows. Connect any webhook — chat instantly.
+    </p>
+    <div class="about-meta">
+      © 2026 &nbsp;·&nbsp; <a href="mailto:gkorobkov@gmail.com">gkorobkov@gmail.com</a>
+    </div>
+  </div>
+
+  <!-- Legal -->
+  <div class="drawer-section">
+    <div class="drawer-section-title" data-i18n="drawerLegal">Legal</div>
+
+    <a href="privacy-policy.html" class="drawer-link" target="_blank">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      </svg>
+      <span data-i18n="drawerPrivacy">Privacy Policy</span>
+      <span class="drawer-link-arrow">›</span>
+    </a>
+
+    <a href="terms.html" class="drawer-link" target="_blank">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/>
+        <line x1="16" y1="17" x2="8" y2="17"/>
+        <polyline points="10 9 9 9 8 9"/>
+      </svg>
+      <span data-i18n="drawerTerms">Terms &amp; Conditions</span>
+      <span class="drawer-link-arrow">›</span>
+    </a>
+
+    <a href="../LICENSE" class="drawer-link" target="_blank">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <span data-i18n="drawerLicense">License</span>
+      <span class="drawer-link-arrow">›</span>
+    </a>
+  </div>
+
 </div>
 
 <div id="messages">
   <div class="welcome" id="welcome-msg">
     <div class="welcome-icon">🤖</div>
-    <h2 data-i18n="welcomeTitle">AI Agent готов</h2>
+    <h2 data-i18n="welcomeTitle">AI Agent</h2>
     <p data-i18n="welcomeSub">Вставь Webhook URL и начинай</p>
   </div>
 </div>
@@ -519,24 +767,36 @@
 
 <script>
 // ── VERSION ──  (grep: APP_VERSION for build increment)
-const APP_VERSION = '0.1.5';
+const APP_VERSION = '0.1.7';
 
 // ── I18N ──
 const i18n = {
   en: {
     btnNewSession:      'New Session',
     btnClear:           'Clear',
-    titleSettings:      'Settings',
+    drawerSettings:     'Settings',
+    drawerLang:         'Language',
+    drawerTheme:        'Theme',
+    drawerThemeDark:    'Dark',
+    drawerThemeLight:   'Light',
+    settingShowErrors:  'Show errors in chat',
+    drawerAbout:        'About',
+    drawerAboutDesc:    'Web interface for AI agents built on n8n workflows. Connect any webhook — chat instantly.',
+    drawerLegal:        'Legal',
+    drawerPrivacy:      'Privacy Policy',
+    drawerTerms:        'Terms & Conditions',
+    drawerLicense:      'License',
     titleTheme:         'Toggle theme',
     titleLang:          'Switch language',
-    settingsLabel:      'Settings',
-    settingShowErrors:  'Show errors in chat',
-    welcomeTitle:       'AI Agent Ready',
+    drawerTitle:        'Menu',
+    welcomeTitle:       'AI Agent',
     welcomeSub:         'Paste Webhook URL to start',
     inputPlaceholder:   'Message… (Enter to send, Shift+Enter for newline)',
     toastLight:         '☀️ Light theme',
     toastDark:          '🌙 Dark theme',
     toastNewSession:    'New session started',
+    toastCopied:        '🔑 Session ID copied',
+    toastCleared:       '🗑 Chat cleared',
     toastNoWebhook:     '⚠️ Enter Webhook URL',
     toastErrorsOn:      'Errors shown in chat',
     toastErrorsOff:     'Errors hidden',
@@ -555,17 +815,29 @@ const i18n = {
   ru: {
     btnNewSession:      'Новая сессия',
     btnClear:           'Очистить',
-    titleSettings:      'Настройки',
+    drawerSettings:     'Настройки',
+    drawerLang:         'Язык',
+    drawerTheme:        'Тема',
+    drawerThemeDark:    'Тёмная',
+    drawerThemeLight:   'Светлая',
+    settingShowErrors:  'Показывать ошибки в чате',
+    drawerAbout:        'О приложении',
+    drawerAboutDesc:    'Веб-интерфейс для AI-агентов на базе n8n. Подключи любой webhook — начни чат мгновенно.',
+    drawerLegal:        'Правовая информация',
+    drawerPrivacy:      'Политика конфиденциальности',
+    drawerTerms:        'Условия использования',
+    drawerLicense:      'Лицензия',
     titleTheme:         'Сменить тему',
     titleLang:          'Сменить язык',
-    settingsLabel:      'Настройки',
-    settingShowErrors:  'Показывать ошибки в чате',
-    welcomeTitle:       'AI Agent готов',
+    drawerTitle:        'Меню',
+    welcomeTitle:       'AI Agent',
     welcomeSub:         'Вставь Webhook URL и начинай',
     inputPlaceholder:   'Сообщение… (Enter — отправить, Shift+Enter — перенос)',
     toastLight:         '☀️ Светлая тема',
     toastDark:          '🌙 Тёмная тема',
     toastNewSession:    'Новая сессия',
+    toastCopied:        '🔑 Session ID скопирован',
+    toastCleared:       '🗑 Чат очищен',
     toastNoWebhook:     '⚠️ Укажи Webhook URL',
     toastErrorsOn:      'Ошибки видны в чате',
     toastErrorsOff:     'Ошибки скрыты',
@@ -601,10 +873,15 @@ function applyLang(l, silent) {
   document.querySelectorAll('[data-i18n-title]').forEach(el => {
     el.title = t(el.dataset.i18nTitle);
   });
-  document.getElementById('lang-label').textContent = l === 'en' ? 'EN' : 'РУ';
+  // Sync header label
+  document.getElementById('lang-label').textContent = l === 'en' ? 'RU' : 'EN';
+  // Sync segmented lang control in drawer
+  document.getElementById('seg-ru').classList.toggle('active', l === 'ru');
+  document.getElementById('seg-en').classList.toggle('active', l === 'en');
   if (!silent) toast(l === 'en' ? '🌐 English' : '🌐 Русский');
 }
-function toggleLang() { applyLang(lang === 'en' ? 'ru' : 'en'); }
+
+function toggleLang() { applyLang(lang === 'ru' ? 'en' : 'ru'); }
 
 // ── THEME ──
 let theme = localStorage.getItem('n8n_theme') || 'dark';
@@ -613,36 +890,51 @@ function applyTheme(newTheme, silent) {
   theme = newTheme;
   document.documentElement.setAttribute('data-theme', theme);
   localStorage.setItem('n8n_theme', theme);
+  // Sync header icon
   const icon = document.getElementById('theme-icon');
-  if (theme === 'dark') {
-    icon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
-  } else {
-    icon.innerHTML = '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+  if (icon) {
+    icon.innerHTML = theme === 'dark'
+      ? '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'
+      : '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
   }
+  // Sync segmented theme control in drawer
+  document.getElementById('seg-dark').classList.toggle('active', theme === 'dark');
+  document.getElementById('seg-light').classList.toggle('active', theme === 'light');
   if (!silent) toast(theme === 'light' ? t('toastLight') : t('toastDark'));
 }
-function toggleTheme() { applyTheme(theme === 'dark' ? 'light' : 'dark'); }
 
 // ── INIT ──
 applyLang(lang, true);
 applyTheme(theme, true);
 document.getElementById('app-title').textContent = `AI Agent v${APP_VERSION}`;
+document.getElementById('about-version').textContent = `v${APP_VERSION}`;
 
 // ── SETTINGS ──
-let settingsOpen = false;
 let showErrors = localStorage.getItem('n8n_show_errors') !== 'false';
 document.getElementById('toggle-errors').checked = showErrors;
 
-function toggleSettings() {
-  settingsOpen = !settingsOpen;
-  document.getElementById('settings-panel').classList.toggle('open', settingsOpen);
-  document.getElementById('settings-btn').classList.toggle('active', settingsOpen);
-}
 function onToggleErrors(val) {
   showErrors = val;
   localStorage.setItem('n8n_show_errors', val);
   toast(val ? t('toastErrorsOn') : t('toastErrorsOff'));
 }
+
+// ── DRAWER ──
+let drawerOpen = false;
+function toggleDrawer() { drawerOpen ? closeDrawer() : openDrawer(); }
+function openDrawer() {
+  drawerOpen = true;
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawer-overlay').classList.add('visible');
+  document.getElementById('burger-btn').classList.add('active');
+}
+function closeDrawer() {
+  drawerOpen = false;
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('visible');
+  document.getElementById('burger-btn').classList.remove('active');
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && drawerOpen) closeDrawer(); });
 
 // ── SESSION ──
 let sessionId = localStorage.getItem('n8n_session') || generateSessionId();
@@ -654,10 +946,10 @@ function generateSessionId() {
   localStorage.setItem('n8n_session', id);
   return id;
 }
-function resetSession() {
+function resetSession(anchor) {
   sessionId = generateSessionId();
   updateSessionDisplay();
-  toast(t('toastNewSession'));
+  toast(t('toastNewSession'), anchor);
 }
 function updateSessionDisplay() {
   document.getElementById('sid-display').textContent = sessionId.slice(0,14) + '…';
@@ -804,7 +1096,7 @@ async function sendMessage() {
   showTyping();
 
   const abortCtrl = new AbortController();
-  const timeoutId = setTimeout(() => abortCtrl.abort(), 10* 60 * 1000);
+  const timeoutId = setTimeout(() => abortCtrl.abort(), 10 * 60 * 1000);
 
   try {
     const res = await fetch(webhookUrl, {
@@ -859,7 +1151,7 @@ async function sendMessage() {
   }
 }
 
-function clearChat() {
+function clearChat(anchor) {
   messagesEl.innerHTML = '';
   const w = document.createElement('div');
   w.className = 'welcome'; w.id = 'welcome-msg';
@@ -867,6 +1159,7 @@ function clearChat() {
     <h2 data-i18n="chatClearedTitle">${t('chatClearedTitle')}</h2>
     <p data-i18n="chatClearedSub">${t('chatClearedSub')}</p>`;
   messagesEl.appendChild(w);
+  toast(t('toastCleared'), anchor);
 }
 
 const inputEl = document.getElementById('msg-input');
@@ -874,10 +1167,26 @@ inputEl.addEventListener('keydown', e => { if(e.key==='Enter'&&!e.shiftKey){e.pr
 inputEl.addEventListener('input', () => resizeTextarea(inputEl));
 function resizeTextarea(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,140)+'px'; }
 
-function toast(msg) {
+function toast(msg, anchor) {
   const el = document.getElementById('toast');
-  el.textContent = msg; el.classList.add('show');
-  setTimeout(()=>el.classList.remove('show'), 2600);
+  clearTimeout(el._t);
+  el.classList.remove('show', 'anchored');
+  el.removeAttribute('style');
+  el.textContent = msg;
+  if (anchor) {
+    const r = anchor.getBoundingClientRect();
+    el.style.left = (r.left + r.width / 2) + 'px';
+    el.style.top = r.top + 'px';
+    el.classList.add('anchored');
+  }
+  void el.offsetHeight;
+  el.classList.add('show');
+  el._t = setTimeout(() => { el.classList.remove('show', 'anchored'); el.removeAttribute('style'); }, 2400);
+}
+function copySession(anchor) {
+  navigator.clipboard.writeText(sessionId)
+    .then(() => toast(t('toastCopied'), anchor))
+    .catch(() => toast('🔑 ' + sessionId.slice(0,14) + '…', anchor));
 }
 </script>
 </body>
