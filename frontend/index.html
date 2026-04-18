@@ -54,6 +54,7 @@
     color: var(--text);
     font-family: var(--font-ui);
     height: 100vh;
+    height: 100dvh;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -529,6 +530,7 @@
   /* ── INPUT ── */
   #input-area {
     padding: 10px 14px 14px;
+    padding-bottom: max(14px, env(safe-area-inset-bottom));
     background: var(--surface);
     border-top: 1px solid var(--border);
     display: flex; gap: 10px; align-items: flex-end;
@@ -576,16 +578,73 @@
   }
 
   #toast {
-    position:fixed; bottom:74px; left:50%;
-    transform:translateX(-50%) translateY(14px);
-    background:var(--surface2); border:1px solid var(--accent);
-    color:var(--accent); font-family:var(--font-mono); font-size:11px;
-    padding:6px 14px; border-radius:20px;
-    opacity:0; transition:opacity .25s,transform .25s; pointer-events:none; z-index:100;
+    position: fixed;
+    top: 56px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-6px);
+    background: var(--surface2); border: 1px solid var(--accent);
+    color: var(--accent); font-family: var(--font-mono); font-size: 11px;
+    padding: 6px 16px; border-radius: 20px; white-space: nowrap;
+    opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; z-index: 200;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
   }
-  #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
-  #toast.anchored { bottom:auto; transform:translateX(-50%) translateY(calc(-100% + 8px)); }
-  #toast.anchored.show { opacity:1; transform:translateX(-50%) translateY(calc(-100% - 8px)); }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* Drawer input (webhook on mobile) */
+  .drawer-input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 7px 10px;
+    border-radius: var(--radius-sm);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .drawer-input::placeholder { color: var(--accent2); opacity: 0.7; }
+  .drawer-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(79,255,176,0.1); }
+  .drawer-input.has-value { color: var(--accent); border-color: rgba(79,255,176,0.5); }
+
+  .drawer-row-btns { display: flex; gap: 8px; margin-top: 10px; }
+  .drawer-row-btns .cfg-btn { flex: 1; text-align: center; }
+
+  /* ── RESPONSIVE ── */
+
+  /* Connection section: visible on mobile only */
+  #drawer-connection { display: none; }
+
+  @media (max-width: 640px) {
+    /* Keep webhook URL, hide secondary controls */
+    #session-id-box  { display: none; }
+    #btn-new-session { display: none; }
+    #btn-clear       { display: none; }
+    .header-title    { font-size: 11px; }
+
+    /* Show connection (session controls) in drawer */
+    #drawer-connection { display: block; }
+
+    /* Compact message bar */
+    #input-area {
+      padding: 6px 10px;
+      padding-bottom: max(8px, env(safe-area-inset-bottom));
+    }
+    #msg-input {
+      min-height: 38px;
+      padding: 8px 12px;
+      font-size: 16px; /* prevents iOS zoom on focus */
+      border-radius: 20px;
+    }
+    #send-btn { width: 38px; height: 38px; }
+    #send-btn svg { width: 15px; height: 15px; }
+  }
+
+  @media (max-width: 400px) {
+    header { gap: 5px; padding: 0 8px; }
+    .header-title { display: none; }
+    #webhook-url { font-size: 10px; }
+  }
 
   /* Resend button */
   .resend-btn {
@@ -617,9 +676,9 @@
   </button>
   <span class="header-title" id="app-title">AI Agent</span>
   <input id="webhook-url" type="text" placeholder="https://your-n8n.com/webhook/…  · Paste Webhook URL to start" />
-  <div id="session-id-box" onclick="copySession(this)" style="cursor:pointer">🔑 <span id="sid-display"></span></div>
-  <button class="cfg-btn" id="btn-new-session" onclick="resetSession(this)" data-i18n="btnNewSession">New Session</button>
-  <button class="cfg-btn" id="btn-clear" onclick="clearChat(this)" data-i18n="btnClear">Clear</button>
+  <div id="session-id-box" onclick="copySession()" style="cursor:pointer">🔑 <span id="sid-display"></span></div>
+  <button class="cfg-btn" id="btn-new-session" onclick="resetSession()" data-i18n="btnNewSession">New Session</button>
+  <button class="cfg-btn" id="btn-clear" onclick="clearChat()" data-i18n="btnClear">Clear</button>
   <div class="status-dot" id="status-dot"></div>
 
   <!-- Theme toggle (right) -->
@@ -657,6 +716,18 @@
         </svg>
       </div>
       <span class="drawer-logo-title" id="drawer-title">Menu</span>
+    </div>
+  </div>
+
+  <!-- Connection (mobile only) -->
+  <div class="drawer-section" id="drawer-connection">
+    <div class="drawer-section-title" data-i18n="drawerConnection">Connection</div>
+    <div class="d-setting-label" style="margin-bottom:6px" data-i18n="drawerWebhook">Webhook URL</div>
+    <input id="webhook-url-mobile" class="drawer-input" type="text"
+      placeholder="https://your-n8n.com/webhook/…" />
+    <div class="drawer-row-btns">
+      <button class="cfg-btn" onclick="resetSession()" data-i18n="btnNewSession">New Session</button>
+      <button class="cfg-btn" onclick="clearChat();closeDrawer()" data-i18n="btnClear">Clear</button>
     </div>
   </div>
 
@@ -767,7 +838,7 @@
 
 <script>
 // ── VERSION ──  (grep: APP_VERSION for build increment)
-const APP_VERSION = '0.1.7';
+const APP_VERSION = '0.1.8';
 
 // ── I18N ──
 const i18n = {
@@ -788,6 +859,8 @@ const i18n = {
     drawerLicense:      'License',
     titleTheme:         'Toggle theme',
     titleLang:          'Switch language',
+    drawerConnection:   'Connection',
+    drawerWebhook:      'Webhook URL',
     drawerTitle:        'Menu',
     welcomeTitle:       'AI Agent',
     welcomeSub:         'Paste Webhook URL to start',
@@ -829,6 +902,8 @@ const i18n = {
     drawerLicense:      'Лицензия',
     titleTheme:         'Сменить тему',
     titleLang:          'Сменить язык',
+    drawerConnection:   'Подключение',
+    drawerWebhook:      'Webhook URL',
     drawerTitle:        'Меню',
     welcomeTitle:       'AI Agent',
     welcomeSub:         'Вставь Webhook URL и начинай',
@@ -942,25 +1017,36 @@ let webhookUrl = localStorage.getItem('n8n_webhook') || '';
 let isThinking = false;
 
 function generateSessionId() {
-  const id = 'web_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
+  const id = 'web_' + Math.random().toString(36).slice(2,8) + '_' + Date.now();
   localStorage.setItem('n8n_session', id);
   return id;
 }
-function resetSession(anchor) {
+function resetSession() {
   sessionId = generateSessionId();
   updateSessionDisplay();
-  toast(t('toastNewSession'), anchor);
+  toast(t('toastNewSession'));
 }
 function updateSessionDisplay() {
   document.getElementById('sid-display').textContent = sessionId.slice(0,14) + '…';
 }
 
 const urlInput = document.getElementById('webhook-url');
+const urlInputMobile = document.getElementById('webhook-url-mobile');
 urlInput.value = webhookUrl;
+urlInputMobile.value = webhookUrl;
 syncWebhookStyle();
 
 urlInput.addEventListener('input', () => {
   webhookUrl = urlInput.value.trim();
+  urlInputMobile.value = webhookUrl;
+  localStorage.setItem('n8n_webhook', webhookUrl);
+  updateStatus();
+  syncWebhookStyle();
+});
+
+urlInputMobile.addEventListener('input', () => {
+  webhookUrl = urlInputMobile.value.trim();
+  urlInput.value = webhookUrl;
   localStorage.setItem('n8n_webhook', webhookUrl);
   updateStatus();
   syncWebhookStyle();
@@ -968,6 +1054,7 @@ urlInput.addEventListener('input', () => {
 
 function syncWebhookStyle() {
   urlInput.classList.toggle('has-value', !!webhookUrl);
+  urlInputMobile.classList.toggle('has-value', !!webhookUrl);
 }
 function updateStatus() {
   document.getElementById('status-dot').className = 'status-dot' + (webhookUrl ? ' online' : '');
@@ -1159,7 +1246,7 @@ function clearChat(anchor) {
     <h2 data-i18n="chatClearedTitle">${t('chatClearedTitle')}</h2>
     <p data-i18n="chatClearedSub">${t('chatClearedSub')}</p>`;
   messagesEl.appendChild(w);
-  toast(t('toastCleared'), anchor);
+  toast(t('toastCleared'));
 }
 
 const inputEl = document.getElementById('msg-input');
@@ -1167,26 +1254,19 @@ inputEl.addEventListener('keydown', e => { if(e.key==='Enter'&&!e.shiftKey){e.pr
 inputEl.addEventListener('input', () => resizeTextarea(inputEl));
 function resizeTextarea(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,140)+'px'; }
 
-function toast(msg, anchor) {
+function toast(msg) {
   const el = document.getElementById('toast');
   clearTimeout(el._t);
-  el.classList.remove('show', 'anchored');
-  el.removeAttribute('style');
+  el.classList.remove('show');
   el.textContent = msg;
-  if (anchor) {
-    const r = anchor.getBoundingClientRect();
-    el.style.left = (r.left + r.width / 2) + 'px';
-    el.style.top = r.top + 'px';
-    el.classList.add('anchored');
-  }
   void el.offsetHeight;
   el.classList.add('show');
-  el._t = setTimeout(() => { el.classList.remove('show', 'anchored'); el.removeAttribute('style'); }, 2400);
+  el._t = setTimeout(() => { el.classList.remove('show'); }, 2200);
 }
-function copySession(anchor) {
+function copySession() {
   navigator.clipboard.writeText(sessionId)
-    .then(() => toast(t('toastCopied'), anchor))
-    .catch(() => toast('🔑 ' + sessionId.slice(0,14) + '…', anchor));
+    .then(() => toast(t('toastCopied')))
+    .catch(() => toast('🔑 ' + sessionId.slice(0,14) + '…'));
 }
 </script>
 </body>
