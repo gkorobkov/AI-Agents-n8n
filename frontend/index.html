@@ -838,7 +838,7 @@
 
 <script>
 // ── VERSION ──  (grep: APP_VERSION for build increment)
-const APP_VERSION = '0.1.8';
+const APP_VERSION = '0.1.9';
 
 // ── I18N ──
 const i18n = {
@@ -1081,6 +1081,43 @@ function renderAgentText(raw) {
 const messagesEl = document.getElementById('messages');
 const msgStore = [];
 
+function makeMsgMeta(role, text, row, bubble) {
+  const meta = document.createElement('div');
+  meta.className = 'bubble-meta';
+
+  const SVG_EDIT   = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+  const SVG_RESEND = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>`;
+  const SVG_COPY   = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+  const SVG_DELETE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
+
+  function mkBtn(svg, title, cls, onclick) {
+    const b = document.createElement('button');
+    b.className = 'resend-btn ' + cls;
+    b.title = title;
+    b.innerHTML = svg;
+    b.onclick = onclick;
+    return b;
+  }
+
+  if (role === 'user') {
+    const idx = msgStore.push(text) - 1;
+    meta.appendChild(mkBtn(SVG_EDIT,   'Edit',   '',       () => editMessage(idx)));
+    meta.appendChild(mkBtn(SVG_RESEND, 'Resend', '',       () => reSend(idx)));
+    meta.appendChild(mkBtn(SVG_DELETE, 'Delete', 'del-btn',() => row.remove()));
+  } else {
+    meta.appendChild(mkBtn(SVG_COPY,   'Copy',   '',       () => {
+      const txt = bubble.innerText || bubble.textContent;
+      navigator.clipboard.writeText(txt).then(() => toast('📋 Copied'));
+    }));
+    meta.appendChild(mkBtn(SVG_DELETE, 'Delete', 'del-btn',() => row.remove()));
+  }
+
+  const time = document.createElement('span');
+  time.textContent = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  meta.appendChild(time);
+  return meta;
+}
+
 function appendMessage(role, text) {
   document.getElementById('welcome-msg')?.remove();
   const row = document.createElement('div');
@@ -1094,24 +1131,22 @@ function appendMessage(role, text) {
   bubble.className = 'bubble';
   if (role === 'agent') bubble.innerHTML = renderAgentText(text);
   else bubble.textContent = text;
-  const meta = document.createElement('div');
-  meta.className = 'bubble-meta';
-  meta.textContent = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-  if (role === 'user') {
-    const idx = msgStore.push(text) - 1;
-    const btn = document.createElement('button');
-    btn.className = 'resend-btn';
-    btn.title = 'Resend';
-    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>`;
-    btn.onclick = () => reSend(idx);
-    meta.appendChild(btn);
-  }
   wrap.appendChild(bubble);
-  wrap.appendChild(meta);
+  wrap.appendChild(makeMsgMeta(role, text, row, bubble));
   row.appendChild(avatar);
   row.appendChild(wrap);
   messagesEl.appendChild(row);
   messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function editMessage(idx) {
+  const text = msgStore[idx];
+  if (!text) return;
+  const input = document.getElementById('msg-input');
+  input.value = text;
+  resizeTextarea(input);
+  input.focus();
+  input.setSelectionRange(input.value.length, input.value.length);
 }
 
 function reSend(idx) {
