@@ -71,9 +71,13 @@ function buildStepsSummary(steps) {
 // ─── Parse model output ───────────────────────────────────────────────────────
 
 const raw = String($json.output ?? "").trim();
+const agentError = $json.error ? String($json.error).trim() : null;
 let obj = null, parse_error = "", schema_warning = "", reply_html = "", agent_logic = "", body = "", response_type = "text";
 
-if (!raw) {
+if (agentError) {
+  response_type = "agent_error";
+  body = sanitizeTelegramHtml(agentError);
+} else if (!raw) {
   response_type = "empty";
   body = "<b>Ошибка</b>\n\nПустой ответ от модели.";
 } else {
@@ -107,6 +111,7 @@ const intermediateSteps = (() => { const p = parseJsonMaybe($json.intermediateSt
 const intermediate_steps_summary = buildStepsSummary(intermediateSteps);
 const chatHistory = $('JSON Chat Memory').first().json.chat_history || {};
 const success = response_type === "json" && !parse_error && Boolean(reply_html);
+const is_agent_error = response_type === "agent_error";
 
 const isWebhook = String($json.message_source ?? "").toUpperCase() === "WH";
 
@@ -138,27 +143,34 @@ const candidates = [
   null,
 ];
 
-const output_clean = isWebhook
-  ? buildOutput(0, true)
-  : candidates.reduce((acc, p) =>
-      acc.length <= TELEGRAM_SOFT_LIMIT ? acc : (p ? buildOutput(...p) : body),
-      buildOutput(DEBUG_JSON_MAX_LEN, true)
-    );
+const output_clean = is_agent_error
+  ? ""
+  : isWebhook
+    ? buildOutput(0, true)
+    : candidates.reduce((acc, p) =>
+        acc.length <= TELEGRAM_SOFT_LIMIT ? acc : (p ? buildOutput(...p) : body),
+        buildOutput(DEBUG_JSON_MAX_LEN, true)
+      );
 
 // ─── Return ───────────────────────────────────────────────────────────────────
 
+const output_short = shortenText(output_clean, 300);
+
 return [{
-  ...$json,
-  user_message_text: chatMemory.user_message_text,
-  sessionId: chatMemory.sessionId,
-  output_short: shortenText(output_clean, 300),
-  output_clean,
-  latency_ms,
-  intermediate_steps_summary,
-  success,
-  agent_logic,
-  parsed_object: obj,
-  parse_error,
-  schema_warning,
-  response_type,
+  json: {
+    ...$json,
+    user_message_text: chatMemory.user_message_text,
+    sessionId: chatMemory.sessionId,
+    output_short,
+    output_clean,
+    latency_ms,
+    intermediate_steps_summary,
+    is_agent_error,
+    success,
+    agent_logic,
+    parsed_object: obj,
+    parse_error,
+    schema_warning,
+    response_type,
+  }
 }];

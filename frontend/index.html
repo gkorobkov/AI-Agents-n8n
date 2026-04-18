@@ -519,7 +519,7 @@
 
 <script>
 // ── VERSION ──  (grep: APP_VERSION for build increment)
-const APP_VERSION = '1.0.1';
+const APP_VERSION = '1.0.3';
 
 // ── I18N ──
 const i18n = {
@@ -547,6 +547,7 @@ const i18n = {
     errTimeout:         'Timeout',
     errParseMsg:        'Failed to parse server response',
     errEmptyMsg:        'Agent returned an empty reply',
+    errAgent:           'Agent Error',
     errTimeoutMsg:      'No response in 6 minutes. The agent may still be running — try again.',
     chatClearedTitle:   'Chat Cleared',
     chatClearedSub:     'Start a new conversation',
@@ -575,6 +576,7 @@ const i18n = {
     errTimeout:         'Таймаут',
     errParseMsg:        'Не удалось разобрать ответ сервера',
     errEmptyMsg:        'Агент вернул пустой ответ',
+    errAgent:           'Ошибка агента',
     errTimeoutMsg:      'Ответ не получен за 6 минут. Агент может всё ещё работать — попробуй ещё раз.',
     chatClearedTitle:   'Чат очищен',
     chatClearedSub:     'Начни новый разговор',
@@ -830,15 +832,19 @@ async function sendMessage() {
 
     if (Array.isArray(data)) data = data[0];
 
-    const reply = data?.output_clean || data?.output || data?.text || data?.message;
-    if (reply) {
-      appendMessage('agent', reply);
-    } else if (data && typeof data === 'object' && Object.keys(data).length > 0) {
-      const jsonStr = JSON.stringify(data, null, 2)
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      appendMessage('agent', `<pre>${jsonStr}</pre>`);
+    if (data.error) {
+      appendError(String(data.error), 'errAgent');
     } else {
-      appendError(t('errEmptyMsg'), 'errEmpty');
+      const reply = data?.output_clean || data?.output || data?.text || data?.message;
+      if (reply) {
+        appendMessage('agent', reply);
+      } else if (data && typeof data === 'object' && Object.keys(data).length > 0) {
+        const jsonStr = JSON.stringify(data, null, 2)
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        appendMessage('agent', `<pre>${jsonStr}</pre>`);
+      } else {
+        appendError(t('errEmptyMsg'), 'errEmpty');
+      }
     }
 
   } catch(err) {
