@@ -3,3 +3,5 @@
 .zencoder/
 .zenflow/
 .build/
+config.copy.json
+config.copy.remote.json
