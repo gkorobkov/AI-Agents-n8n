@@ -5,3 +5,5 @@
 .build/
 config.copy.json
 config.copy.remote.json
+api_key_limit.js
+copy-ssh-remote.cmd
