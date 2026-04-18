@@ -1,2 +1,2 @@
-output_short,output_clean,agent_logic,parsed_object,parse_error,latency_ms,intermediate_steps_summary,sessionId
-Краткий итог ответа,<b>Маршрут найден</b>,Agent used travel tools,"{""mode"":""TICKETS""}",,1842,1. tool=Geocode_HTTP_Request | result=city found,1234
+sessionId,output_short,output_clean,agent_logic,parsed_object,parse_error,latency_ms,intermediate_steps_summary
+web_1234,Краткий итог ответа,<b>Маршрут найден</b>,Agent used travel tools,"{""mode"":""TICKETS""}",,1842,1. tool=Geocode_HTTP_Request | result=city found
