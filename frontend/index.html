@@ -103,6 +103,13 @@
     white-space: nowrap;
     flex-shrink: 0;
   }
+  .header-title .header-version {
+    font-size: 10px;
+    font-weight: 400;
+    color: var(--text-muted);
+    margin-left: 6px;
+    opacity: 0.8;
+  }
 
   #webhook-url {
     flex: 1;
@@ -363,7 +370,7 @@
   .about-version {
     display: inline-block;
     font-family: var(--font-mono);
-    font-size: 11px;
+    font-size: 10px;
     color: var(--accent);
     background: var(--accent-dim);
     border: 1px solid rgba(79,255,176,0.3);
@@ -584,11 +591,27 @@
     transform: translateX(-50%) translateY(-6px);
     background: var(--surface2); border: 1px solid var(--accent);
     color: var(--accent); font-family: var(--font-mono); font-size: 11px;
-    padding: 6px 16px; border-radius: 20px; white-space: nowrap;
-    opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; z-index: 200;
+    padding: 10px 14px; border-radius: 20px; white-space: nowrap;
+    opacity: 0; transition: opacity .2s, transform .2s; z-index: 200;
     box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    display: flex; align-items: center; gap: 10px;
+    justify-content: center; min-width: 220px; max-width: 340px;
+    pointer-events: auto;
   }
   #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #toast button {
+    border: 1px solid rgba(79,255,176,0.35);
+    background: rgba(79,255,176,0.08);
+    color: var(--accent);
+    border-radius: 16px;
+    padding: 4px 10px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    cursor: pointer;
+  }
+  #toast button:hover {
+    background: rgba(79,255,176,0.14);
+  }
 
   /* Drawer input (webhook on mobile) */
   .drawer-input {
@@ -646,7 +669,6 @@
     #webhook-url { font-size: 10px; }
   }
 
-  /* Resend button */
   .resend-btn {
     background: transparent;
     border: none;
@@ -660,6 +682,7 @@
     line-height: 1;
   }
   .msg-row.user .resend-btn { opacity: 1; color: var(--accent); }
+  .msg-row.agent .resend-btn { opacity: 0.8; color: var(--text-muted); }
   .resend-btn:hover { color: var(--accent2); }
   .resend-btn svg { width: 11px; height: 11px; }
 </style>
@@ -838,7 +861,7 @@
 
 <script>
 // ── VERSION ──  (grep: APP_VERSION for build increment)
-const APP_VERSION = '0.1.9';
+const APP_VERSION = '0.1.11';
 
 // ── I18N ──
 const i18n = {
@@ -873,6 +896,16 @@ const i18n = {
     toastNoWebhook:     '⚠️ Enter Webhook URL',
     toastErrorsOn:      'Errors shown in chat',
     toastErrorsOff:     'Errors hidden',
+    toastEdited:        'Editing message...',
+    toastResent:        'Resending message...',
+    toastDeleted:       'Message deleted',
+    toastUndone:        'Undo successful',
+    btnUndo:            'Undo',
+    toastCopiedMsg:     '📋 Copied',
+    btnEdit:            'Edit',
+    btnResend:          'Resend',
+    btnCopy:            'Copy',
+    btnDelete:          'Delete',
     errHttp:            'HTTP Error',
     errNetwork:         'Network Error',
     errParse:           'Parse Error',
@@ -916,6 +949,16 @@ const i18n = {
     toastNoWebhook:     '⚠️ Укажи Webhook URL',
     toastErrorsOn:      'Ошибки видны в чате',
     toastErrorsOff:     'Ошибки скрыты',
+    toastEdited:        'Редактирование сообщения...',
+    toastResent:        'Повторная отправка...',
+    toastDeleted:       'Сообщение удалено',
+    toastUndone:        'Отмена выполнена',
+    btnUndo:            'Отменить',
+    toastCopiedMsg:     '📋 Скопировано',
+    btnEdit:            'Редактировать',
+    btnResend:          'Отправить снова',
+    btnCopy:            'Копировать',
+    btnDelete:          'Удалить',
     errHttp:            'HTTP ошибка',
     errNetwork:         'Ошибка сети',
     errParse:           'Ошибка парсинга',
@@ -981,7 +1024,7 @@ function applyTheme(newTheme, silent) {
 // ── INIT ──
 applyLang(lang, true);
 applyTheme(theme, true);
-document.getElementById('app-title').textContent = `AI Agent v${APP_VERSION}`;
+document.getElementById('app-title').innerHTML = `AI Agent <span class="header-version">v${APP_VERSION}</span>`;
 document.getElementById('about-version').textContent = `v${APP_VERSION}`;
 
 // ── SETTINGS ──
@@ -1101,15 +1144,15 @@ function makeMsgMeta(role, text, row, bubble) {
 
   if (role === 'user') {
     const idx = msgStore.push(text) - 1;
-    meta.appendChild(mkBtn(SVG_EDIT,   'Edit',   '',       () => editMessage(idx)));
-    meta.appendChild(mkBtn(SVG_RESEND, 'Resend', '',       () => reSend(idx)));
-    meta.appendChild(mkBtn(SVG_DELETE, 'Delete', 'del-btn',() => row.remove()));
+    meta.appendChild(mkBtn(SVG_EDIT,   t('btnEdit'),   '',       () => { editMessage(idx); showPopup(t('toastEdited')); }));
+    meta.appendChild(mkBtn(SVG_RESEND, t('btnResend'), '',       () => { reSend(idx); showPopup(t('toastResent')); }));
+    meta.appendChild(mkBtn(SVG_DELETE, t('btnDelete'), 'del-btn',() => deleteMessage(row)));
   } else {
-    meta.appendChild(mkBtn(SVG_COPY,   'Copy',   '',       () => {
+    meta.appendChild(mkBtn(SVG_COPY,   t('btnCopy'),   '',       () => {
       const txt = bubble.innerText || bubble.textContent;
-      navigator.clipboard.writeText(txt).then(() => toast('📋 Copied'));
+      navigator.clipboard.writeText(txt).then(() => toast(t('toastCopiedMsg')));
     }));
-    meta.appendChild(mkBtn(SVG_DELETE, 'Delete', 'del-btn',() => row.remove()));
+    meta.appendChild(mkBtn(SVG_DELETE, t('btnDelete'), 'del-btn',() => deleteMessage(row)));
   }
 
   const time = document.createElement('span');
@@ -1178,10 +1221,8 @@ function appendError(msg, labelKey) {
     ${label}
   </div>
   <div class="error-msg">${safeMsg}</div>`;
-  const meta = document.createElement('div');
-  meta.className = 'bubble-meta';
-  meta.textContent = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-  wrap.appendChild(b); wrap.appendChild(meta);
+  wrap.appendChild(b);
+  wrap.appendChild(makeMsgMeta('agent', safeMsg, row, b));
   row.appendChild(av); row.appendChild(wrap);
   messagesEl.appendChild(row);
   messagesEl.scrollTop = messagesEl.scrollHeight;
@@ -1289,15 +1330,82 @@ inputEl.addEventListener('keydown', e => { if(e.key==='Enter'&&!e.shiftKey){e.pr
 inputEl.addEventListener('input', () => resizeTextarea(inputEl));
 function resizeTextarea(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,140)+'px'; }
 
-function toast(msg) {
+let pendingDeletion = null;
+
+function showPopup(message, options = {}) {
   const el = document.getElementById('toast');
   clearTimeout(el._t);
   el.classList.remove('show');
-  el.textContent = msg;
+  el.innerHTML = '';
+
+  const text = document.createElement('span');
+  text.textContent = message;
+  el.appendChild(text);
+
+  if (options.actionLabel && typeof options.onAction === 'function') {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = options.actionLabel;
+    btn.onclick = () => {
+      options.onAction();
+      hidePopup();
+    };
+    el.appendChild(btn);
+  }
+
   void el.offsetHeight;
   el.classList.add('show');
-  el._t = setTimeout(() => { el.classList.remove('show'); }, 2200);
+  el._t = setTimeout(() => { hidePopup(); }, options.duration || 2200);
 }
+
+function toast(msg) {
+  showPopup(msg);
+}
+
+function hidePopup() {
+  const el = document.getElementById('toast');
+  clearTimeout(el._t);
+  el.classList.remove('show');
+}
+
+function deleteMessage(row) {
+  if (!row || !row.parentNode) return;
+  if (pendingDeletion && pendingDeletion.timeoutId) {
+    clearTimeout(pendingDeletion.timeoutId);
+    pendingDeletion = null;
+  }
+
+  const parent = row.parentNode;
+  const nextSibling = row.nextSibling;
+  row.remove();
+
+  pendingDeletion = {
+    row,
+    parent,
+    nextSibling,
+    timeoutId: setTimeout(() => {
+      pendingDeletion = null;
+      hidePopup();
+    }, 6000)
+  };
+
+  showPopup(t('toastDeleted'), {
+    actionLabel: t('btnUndo'),
+    onAction: undoDelete,
+    duration: 6000
+  });
+}
+
+function undoDelete() {
+  if (!pendingDeletion) return;
+  const { row, parent, nextSibling, timeoutId } = pendingDeletion;
+  clearTimeout(timeoutId);
+  pendingDeletion = null;
+  if (nextSibling) parent.insertBefore(row, nextSibling);
+  else parent.appendChild(row);
+  toast(t('toastUndone'));
+}
+
 function copySession() {
   navigator.clipboard.writeText(sessionId)
     .then(() => toast(t('toastCopied')))
