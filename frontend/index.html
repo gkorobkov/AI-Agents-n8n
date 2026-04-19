@@ -602,6 +602,15 @@
     pointer-events: auto;
   }
   #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #toast.warn {
+    border-color: rgba(255,185,60,0.45);
+    color: rgba(255,195,80,0.95);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,185,60,0.1);
+    white-space: normal;
+    max-width: 460px;
+    text-align: center;
+    line-height: 1.5;
+  }
   #toast button {
     border: 1px solid rgba(79,255,176,0.35);
     background: rgba(79,255,176,0.08);
@@ -886,6 +895,41 @@
     border: 1px solid rgba(0,200,255,0.25);
   }
 
+  #url-type-toggle {
+    display: none;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 2px;
+  }
+  .url-env-btn {
+    font-size: 8px;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    padding: 2px 5px;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    white-space: nowrap;
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid rgba(136,152,184,0.2);
+    opacity: 0.35;
+  }
+  .url-env-btn:hover { opacity: 0.65; }
+  #url-btn-prod.active {
+    background: rgba(0,200,255,0.12);
+    color: var(--accent2);
+    border-color: rgba(0,200,255,0.25);
+    opacity: 1;
+  }
+  #url-btn-test.active {
+    background: rgba(136,152,184,0.1);
+    color: var(--text-muted);
+    border-color: rgba(136,152,184,0.3);
+    opacity: 1;
+  }
+
   .wh-time {
     font-size: 9px;
     color: var(--text-muted);
@@ -948,6 +992,10 @@
   </button>
   <span class="header-title" id="app-title">AI Agent</span>
   <div id="webhook-wrap">
+    <div id="url-type-toggle">
+      <button class="url-env-btn" id="url-btn-prod" onclick="setUrlType('prod')" title="Switch to PROD webhook">PROD</button>
+      <button class="url-env-btn" id="url-btn-test" onclick="setUrlType('test')" title="Switch to TEST webhook">TEST</button>
+    </div>
     <input id="webhook-url" type="text" placeholder="https://your-n8n.com/webhook/…  · Paste Webhook URL to start" />
     <button id="webhook-hist-btn" onclick="toggleHistoryDropdown()" title="URL history">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -1142,7 +1190,7 @@
 
 <script>
 // ── VERSION ──  (grep: APP_VERSION for build increment)
-const APP_VERSION = '0.1.13';
+const APP_VERSION = '0.1.14';
 
 // ── I18N ──
 const i18n = {
@@ -1404,6 +1452,45 @@ urlInputMobile.addEventListener('blur', () => {
 function syncWebhookStyle() {
   urlInput.classList.toggle('has-value', !!webhookUrl);
   urlInputMobile.classList.toggle('has-value', !!webhookUrl);
+  updateUrlTypeToggle();
+}
+
+function updateUrlTypeToggle() {
+  const wrap = document.getElementById('url-type-toggle');
+  if (!wrap) return;
+  wrap.style.display = 'flex';
+  const hasWebhook = /\/webhook(-test)?\//.test(webhookUrl);
+  const type = hasWebhook ? getUrlType(webhookUrl) : '';
+  document.getElementById('url-btn-prod').classList.toggle('active', type === 'prod');
+  document.getElementById('url-btn-test').classList.toggle('active', type === 'test');
+}
+
+function setUrlType(type) {
+  if (!webhookUrl) {
+    showPopup('No webhook URL entered yet.', { type: 'warn', duration: 2500 });
+    return;
+  }
+  const hasPattern = /\/webhook(-test)?\//.test(webhookUrl);
+  if (!hasPattern) {
+    showPopup('Cannot switch: URL does not contain /webhook/ or /webhook-test/ segment.', { type: 'warn', duration: 3500 });
+    return;
+  }
+  const current = getUrlType(webhookUrl);
+  if (current === type) return;
+  let newUrl;
+  if (type === 'test') {
+    newUrl = webhookUrl.replace('/webhook/', '/webhook-test/');
+  } else {
+    newUrl = webhookUrl.replace('/webhook-test/', '/webhook/');
+  }
+  webhookUrl = newUrl;
+  urlInput.value = newUrl;
+  urlInputMobile.value = newUrl;
+  localStorage.setItem('n8n_webhook', newUrl);
+  syncWebhookStyle();
+  saveUrlToHistory(webhookUrl);
+  startUrlCheck(webhookUrl);
+  showPopup(`Switched to ${type.toUpperCase()} webhook.`, { duration: 1800 });
 }
 
 let urlDotState = ''; // 'online' | 'warn' | 'error' | ''
@@ -1885,6 +1972,7 @@ function showPopup(message, options = {}) {
     el.appendChild(btn);
   }
 
+  el.classList.toggle('warn', options.type === 'warn');
   void el.offsetHeight;
   el.classList.add('show');
   el._t = setTimeout(() => { hidePopup(); }, options.duration || 2200);
