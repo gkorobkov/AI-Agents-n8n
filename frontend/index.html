@@ -1190,7 +1190,7 @@
 
 <script>
 // ── VERSION ──  (grep: APP_VERSION for build increment)
-const APP_VERSION = '0.1.14';
+const APP_VERSION = '0.1.15';
 
 // ── I18N ──
 const i18n = {
@@ -1722,7 +1722,7 @@ document.addEventListener('click', (e) => {
 });
 
 // ── RENDER ──
-const ALLOWED_TAGS = /^\/?(b|i|u|strong|em|code|pre)$/i;
+const ALLOWED_TAGS = /^\/?(b|i|u|strong|em|small|code|pre)$/i;
 
 function renderAgentText(raw) {
   if (!raw) return '';

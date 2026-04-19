@@ -113,23 +113,39 @@ const chatHistory = $('JSON Chat Memory').first().json.chat_history || {};
 const success = response_type === "json" && !parse_error && Boolean(reply_html);
 const is_agent_error = response_type === "agent_error";
 
-const isWebhook = String($json.message_source ?? "").toUpperCase() === "WH";
+const isWebhook = String(chatMemory.message_source ?? $json.message_source ?? "").toUpperCase() === "WH";
 
 // ─── Build output with cascading size limits ──────────────────────────────────
+
+function withDebugFormat(title, value, maxLen = 0) {
+  const text = typeof value === "string" ? value : safeStringify(value);
+  const shortened = maxLen > 0 ? shortenText(text, maxLen) : text;
+  const titlePart = title ? `<i>${escHtml(title)}</i>\n` : "";
+  return `${titlePart}<code>${escHtml(shortened)}</code>`;
+}
 
 function buildOutput(maxLen = 0, includeAgentLogic = true) {
   if (!DEBUG_ENABLED) return body;
   const blocks = [body];
-  if (parse_error)    blocks.push(withFormat("[debug] parse_error", parse_error));
-  if (schema_warning) blocks.push(withFormat("[debug] schema_warning", schema_warning));
+  if (parse_error)    blocks.push(withDebugFormat("[debug] parse_error", parse_error));
+  if (schema_warning) blocks.push(withDebugFormat("[debug] schema_warning", schema_warning));
   if (includeAgentLogic) {
-    blocks.push(withFormat("Agent Logic", agent_logic, maxLen));
-    if (intermediate_steps_summary) {
+    blocks.push(`<i> Debug: </i>`);
+    blocks.push(withDebugFormat("Agent Logic", agent_logic, maxLen));
+
+    const noInfoTag = (text) => isWebhook ? `<small>${text}</small>` : `<code>${text}</code>`;
+
+    if (intermediateSteps.length > 0) {
       const stepsText = maxLen > 0 ? shortenText(intermediate_steps_summary, maxLen) : intermediate_steps_summary;
-      blocks.push(`<b>Tools used</b>\n${escHtml(stepsText)}`);
+      blocks.push(`<i>Tools used</i>\n<code>${escHtml(stepsText)}</code>`);
+    } else {
+      blocks.push(`<i>Tools used</i>\n${noInfoTag("No intermediate steps")}`);
     }
+
     if (Object.keys(chatHistory).length > 0) {
-      blocks.push(withFormat("Chat History", chatHistory, maxLen));
+      blocks.push(withDebugFormat("Chat History", chatHistory, maxLen));
+    } else {
+      blocks.push(`<i>Chat History</i>\n${noInfoTag("No chat history")}`);
     }
   }
   return blocks.filter(Boolean).join("\n\n");
