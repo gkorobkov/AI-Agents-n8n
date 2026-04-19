@@ -148,19 +148,19 @@
   }
 
   .cfg-btn {
-    background: var(--accent-dim);
-    border: 1px solid var(--accent);
-    color: var(--accent);
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
     font-family: var(--font-mono);
     font-size: 10px;
     padding: 4px 10px;
     border-radius: var(--radius-sm);
     cursor: pointer;
-    transition: background 0.2s;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
     white-space: nowrap;
     flex-shrink: 0;
   }
-  .cfg-btn:hover { background: rgba(79,255,176,0.22); }
+  .cfg-btn:hover { background: var(--surface2); color: var(--text); border-color: var(--text-muted); }
 
   .icon-btn {
     width: 28px; height: 28px;
@@ -204,7 +204,15 @@
     transition: background 0.4s, box-shadow 0.4s;
   }
   .status-dot.online   { background: var(--accent);  box-shadow: 0 0 6px var(--accent); }
+  .status-dot.warn     { background: #f0a500;         box-shadow: 0 0 6px #f0a500; }
+  .status-dot.error    { background: var(--error);    box-shadow: 0 0 6px var(--error); }
   .status-dot.thinking { background: var(--accent2); box-shadow: 0 0 6px var(--accent2); animation: pulse 1s infinite; }
+
+  #btn-clear:hover { border-color: var(--error) !important; color: var(--error) !important; background: rgba(255,79,107,0.07) !important; }
+
+  #btn-new-session { border-color: transparent; background: transparent; opacity: 0.72; }
+  #btn-new-session:hover { border-color: transparent !important; background: transparent !important; color: var(--accent); opacity: 1; }
+  #btn-new-session svg { width: 20px; height: 20px; }
 
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
@@ -685,6 +693,224 @@
   .msg-row.agent .resend-btn { opacity: 0.8; color: var(--text-muted); }
   .resend-btn:hover { color: var(--accent2); }
   .resend-btn svg { width: 11px; height: 11px; }
+
+  /* ── CONSENT BANNER ── */
+  #consent-banner {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    z-index: 500;
+    box-shadow: 0 -4px 20px var(--shadow);
+    transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+    flex-wrap: wrap;
+  }
+  #consent-banner.hidden { transform: translateY(110%); pointer-events: none; }
+  #consent-text {
+    flex: 1;
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: var(--font-ui);
+    line-height: 1.6;
+    min-width: 200px;
+  }
+  #consent-text a { color: var(--accent2); text-decoration: underline; }
+  #consent-text a:hover { color: var(--accent); }
+  #consent-btn {
+    background: var(--accent);
+    border: none;
+    color: #0d0f14;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 7px 18px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: opacity 0.2s, transform 0.15s;
+  }
+  #consent-btn:hover { opacity: 0.88; transform: scale(1.03); }
+
+  /* ── WEBHOOK HISTORY DROPDOWN ── */
+  #webhook-wrap {
+    flex: 1;
+    min-width: 0;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  #webhook-hist-btn {
+    width: 20px; height: 20px;
+    flex-shrink: 0;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    border-radius: 3px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
+    padding: 0;
+  }
+  #webhook-hist-btn:hover { color: var(--accent2); border-color: var(--accent2); background: rgba(0,200,255,0.07); }
+  #webhook-hist-btn svg { width: 11px; height: 11px; transition: transform 0.2s; }
+  #webhook-hist-btn.active { color: var(--accent2); border-color: var(--accent2); background: rgba(0,200,255,0.1); }
+  #webhook-hist-btn.active svg { transform: rotate(180deg); }
+
+  #webhook-hist-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: 0 8px 28px var(--shadow);
+    z-index: 300;
+    overflow: hidden;
+    min-width: 260px;
+  }
+  #webhook-hist-dropdown.open { display: block; }
+
+  .wh-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .wh-head-title {
+    font-size: 9px;
+    font-family: var(--font-mono);
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .wh-clear-btn {
+    font-size: 9px;
+    font-family: var(--font-mono);
+    background: transparent;
+    border: none;
+    color: var(--error);
+    cursor: pointer;
+    opacity: 0.65;
+    padding: 0;
+    transition: opacity 0.2s;
+  }
+  .wh-clear-btn:hover { opacity: 1; }
+
+  .wh-empty {
+    padding: 14px 12px;
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    text-align: center;
+  }
+
+  .wh-list { overflow-y: auto; max-height: 280px; }
+  .wh-list::-webkit-scrollbar { width: 3px; }
+  .wh-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .wh-item {
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.13s;
+  }
+  .wh-item:last-child { border-bottom: none; }
+  .wh-item:hover { background: var(--surface2); }
+
+  .wh-item-url {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--accent);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 4px;
+  }
+
+  .wh-item-meta {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .wh-badge {
+    font-size: 8px;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    padding: 1px 4px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .wh-badge.wh-test {
+    background: rgba(136,152,184,0.1);
+    color: var(--text-muted);
+    border: 1px solid rgba(136,152,184,0.3);
+  }
+  .wh-badge.wh-prod {
+    background: rgba(0,200,255,0.12);
+    color: var(--accent2);
+    border: 1px solid rgba(0,200,255,0.25);
+  }
+
+  .wh-time {
+    font-size: 9px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    flex: 1;
+  }
+
+  .wh-sdot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: none;
+  }
+  .wh-sdot.vis { display: block; }
+  .wh-sdot.ok   { background: var(--accent);  box-shadow: 0 0 5px var(--accent); }
+  .wh-sdot.warn { background: #f0a500;         box-shadow: 0 0 5px #f0a500; }
+  .wh-sdot.err  { background: var(--error);    box-shadow: 0 0 5px var(--error); }
+
+  .wh-check-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 8px;
+    font-family: var(--font-mono);
+    padding: 2px 5px;
+    border-radius: 3px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: border-color 0.2s, color 0.2s, opacity 0.2s;
+    white-space: nowrap;
+  }
+  .wh-check-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+  .wh-check-btn.checking { opacity: 0.4; pointer-events: none; }
+
+  .wh-del-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1;
+    padding: 0 2px;
+    cursor: pointer;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: color 0.2s, opacity 0.2s;
+  }
+  .wh-item:hover .wh-del-btn { opacity: 1; }
+  .wh-del-btn:hover { color: var(--error); }
 </style>
 </head>
 <body>
@@ -698,11 +924,35 @@
     </svg>
   </button>
   <span class="header-title" id="app-title">AI Agent</span>
-  <input id="webhook-url" type="text" placeholder="https://your-n8n.com/webhook/…  · Paste Webhook URL to start" />
+  <div id="webhook-wrap">
+    <input id="webhook-url" type="text" placeholder="https://your-n8n.com/webhook/…  · Paste Webhook URL to start" />
+    <button id="webhook-hist-btn" onclick="toggleHistoryDropdown()" title="URL history">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 9 12 15 18 9"/>
+      </svg>
+    </button>
+    <div id="webhook-hist-dropdown"></div>
+  </div>
   <div id="session-id-box" onclick="copySession()" style="cursor:pointer">🔑 <span id="sid-display"></span></div>
-  <button class="cfg-btn" id="btn-new-session" onclick="resetSession()" data-i18n="btnNewSession">New Session</button>
-  <button class="cfg-btn" id="btn-clear" onclick="clearChat()" data-i18n="btnClear">Clear</button>
   <div class="status-dot" id="status-dot"></div>
+  <button class="icon-btn" id="btn-new-session" onclick="resetSession()" data-i18n-title="btnNewSessionTitle" title="Start a new session (new conversation ID)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M22 12a10 10 0 1 1-2.22-6.32"/>
+      <polyline points="22 3 22 9 16 9"/>
+      <circle cx="9.5" cy="13.5" r="3"/>
+      <path d="M12.5 13.5h7"/>
+      <path d="M16 13.5v3"/>
+      <path d="M19.5 13.5v2"/>
+    </svg>
+  </button>
+  <button class="icon-btn" id="btn-clear" onclick="clearChat()" data-i18n-title="btnClearTitle" title="Clear ALL chat messages">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="3 6 5 6 21 6"/>
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+      <path d="M10 11v6"/><path d="M14 11v6"/>
+      <path d="M9 6V4h6v2"/>
+    </svg>
+  </button>
 
   <!-- Theme toggle (right) -->
   <button class="icon-btn" id="theme-btn" onclick="applyTheme(theme === 'dark' ? 'light' : 'dark')" data-i18n-title="titleTheme" title="Toggle theme">
@@ -821,7 +1071,7 @@
         <line x1="16" y1="17" x2="8" y2="17"/>
         <polyline points="10 9 9 9 8 9"/>
       </svg>
-      <span data-i18n="drawerTerms">Terms &amp; Conditions</span>
+      <span data-i18n="drawerTerms">Terms of Use</span>
       <span class="drawer-link-arrow">›</span>
     </a>
 
@@ -859,15 +1109,22 @@
 
 <div id="toast"></div>
 
+<div id="consent-banner">
+  <div id="consent-text"></div>
+  <button id="consent-btn" onclick="acceptConsent()"></button>
+</div>
+
 <script>
 // ── VERSION ──  (grep: APP_VERSION for build increment)
-const APP_VERSION = '0.1.11';
+const APP_VERSION = '0.1.12';
 
 // ── I18N ──
 const i18n = {
   en: {
     btnNewSession:      'New Session',
+    btnNewSessionTitle: 'Start a new session (new conversation ID)',
     btnClear:           'Clear',
+    btnClearTitle:      'Clear ALL chat messages',
     drawerSettings:     'Settings',
     drawerLang:         'Language',
     drawerTheme:        'Theme',
@@ -878,7 +1135,7 @@ const i18n = {
     drawerAboutDesc:    'Web interface for AI agents built on n8n workflows. Connect any webhook — chat instantly.',
     drawerLegal:        'Legal',
     drawerPrivacy:      'Privacy Policy',
-    drawerTerms:        'Terms & Conditions',
+    drawerTerms:        'Terms of Use',
     drawerLicense:      'License',
     titleTheme:         'Toggle theme',
     titleLang:          'Switch language',
@@ -902,6 +1159,11 @@ const i18n = {
     toastUndone:        'Undo successful',
     btnUndo:            'Undo',
     toastCopiedMsg:     '📋 Copied',
+    consentText:        'By using this application you agree to our',
+    consentPrivacy:     'Privacy Policy',
+    consentTerms:       'Terms of Use',
+    consentCookie:      'and the use of localStorage to store your preferences.',
+    consentBtn:         'Accept & Continue',
     btnEdit:            'Edit',
     btnResend:          'Resend',
     btnCopy:            'Copy',
@@ -920,7 +1182,9 @@ const i18n = {
   },
   ru: {
     btnNewSession:      'Новая сессия',
+    btnNewSessionTitle: 'Начать новую сессию (новый ID разговора)',
     btnClear:           'Очистить',
+    btnClearTitle:      'Очистить ВСЕ сообщения чата',
     drawerSettings:     'Настройки',
     drawerLang:         'Язык',
     drawerTheme:        'Тема',
@@ -955,6 +1219,11 @@ const i18n = {
     toastUndone:        'Отмена выполнена',
     btnUndo:            'Отменить',
     toastCopiedMsg:     '📋 Скопировано',
+    consentText:        'Используя это приложение, вы соглашаетесь с',
+    consentPrivacy:     'Политикой конфиденциальности',
+    consentTerms:       'Условиями использования',
+    consentCookie:      'и использованием localStorage для хранения данных.',
+    consentBtn:         'Принять и продолжить',
     btnEdit:            'Редактировать',
     btnResend:          'Отправить снова',
     btnCopy:            'Копировать',
@@ -997,6 +1266,7 @@ function applyLang(l, silent) {
   document.getElementById('seg-ru').classList.toggle('active', l === 'ru');
   document.getElementById('seg-en').classList.toggle('active', l === 'en');
   if (!silent) toast(l === 'en' ? '🌐 English' : '🌐 Русский');
+  if (typeof renderConsentBanner === 'function') renderConsentBanner();
 }
 
 function toggleLang() { applyLang(lang === 'ru' ? 'en' : 'ru'); }
@@ -1060,7 +1330,8 @@ let webhookUrl = localStorage.getItem('n8n_webhook') || '';
 let isThinking = false;
 
 function generateSessionId() {
-  const id = 'web_' + Math.random().toString(36).slice(2,8) + '_' + Date.now();
+  const ts = String(Date.now()).split('').reverse().join('');
+  const id = 'web_' + ts + '_' + Math.random().toString(36).slice(2,8);
   localStorage.setItem('n8n_session', id);
   return id;
 }
@@ -1071,6 +1342,7 @@ function resetSession() {
 }
 function updateSessionDisplay() {
   document.getElementById('sid-display').textContent = sessionId.slice(0,14) + '…';
+  document.getElementById('session-id-box').title = 'Session ID: ' + sessionId;
 }
 
 const urlInput = document.getElementById('webhook-url');
@@ -1083,27 +1355,258 @@ urlInput.addEventListener('input', () => {
   webhookUrl = urlInput.value.trim();
   urlInputMobile.value = webhookUrl;
   localStorage.setItem('n8n_webhook', webhookUrl);
+  urlDotState = '';
   updateStatus();
   syncWebhookStyle();
+});
+urlInput.addEventListener('blur', () => {
+  if (webhookUrl) { saveUrlToHistory(webhookUrl); startUrlCheck(webhookUrl); }
 });
 
 urlInputMobile.addEventListener('input', () => {
   webhookUrl = urlInputMobile.value.trim();
   urlInput.value = webhookUrl;
   localStorage.setItem('n8n_webhook', webhookUrl);
+  urlDotState = '';
   updateStatus();
   syncWebhookStyle();
+});
+urlInputMobile.addEventListener('blur', () => {
+  if (webhookUrl) { saveUrlToHistory(webhookUrl); startUrlCheck(webhookUrl); }
 });
 
 function syncWebhookStyle() {
   urlInput.classList.toggle('has-value', !!webhookUrl);
   urlInputMobile.classList.toggle('has-value', !!webhookUrl);
 }
+
+let urlDotState = ''; // 'online' | 'warn' | 'error' | ''
+
 function updateStatus() {
-  document.getElementById('status-dot').className = 'status-dot' + (webhookUrl ? ' online' : '');
+  if (isThinking) return;
+  const dot = document.getElementById('status-dot');
+  if (!webhookUrl) { dot.className = 'status-dot'; urlDotState = ''; return; }
+  dot.className = 'status-dot ' + (urlDotState || 'error');
+}
+
+async function probeUrlStatus(url) {
+  const mkA = (ms) => { const c = new AbortController(); const t = setTimeout(() => c.abort(), ms); return { signal: c.signal, clear: () => clearTimeout(t) }; };
+  const a1 = mkA(5000);
+  try {
+    const res = await fetch(url, { method: 'GET', signal: a1.signal });
+    a1.clear();
+    return res.ok ? 'online' : 'error';
+  } catch(e) {
+    a1.clear();
+    if (e.name === 'AbortError') return 'error';
+    const a2 = mkA(5000);
+    try {
+      await fetch(url, { method: 'GET', mode: 'no-cors', signal: a2.signal });
+      a2.clear();
+      return 'warn';
+    } catch(e2) { a2.clear(); return 'error'; }
+  }
+}
+
+async function startUrlCheck(url) {
+  if (!url || isThinking) return;
+  urlDotState = 'error';
+  updateStatus();
+  urlDotState = await probeUrlStatus(url);
+  if (!isThinking) updateStatus();
 }
 updateSessionDisplay();
 updateStatus();
+if (webhookUrl) startUrlCheck(webhookUrl);
+
+// ── WEBHOOK URL HISTORY ──
+const WEBHOOK_HISTORY_MAX = 10;
+
+let webhookHistory = (() => {
+  try { return JSON.parse(localStorage.getItem('n8n_wh_history') || '[]'); }
+  catch { return []; }
+})();
+
+function saveUrlToHistory(url) {
+  if (!url || !url.startsWith('http')) return;
+  webhookHistory = webhookHistory.filter(e => e.url !== url);
+  webhookHistory.unshift({ url, ts: Date.now() });
+  if (webhookHistory.length > WEBHOOK_HISTORY_MAX) webhookHistory.length = WEBHOOK_HISTORY_MAX;
+  localStorage.setItem('n8n_wh_history', JSON.stringify(webhookHistory));
+}
+
+function getUrlType(url) { return /test/i.test(url) ? 'test' : 'prod'; }
+
+function fmtHistTs(ts) {
+  const d = new Date(ts);
+  return d.toLocaleString([], { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
+let histDropOpen = false;
+
+function toggleHistoryDropdown() { histDropOpen ? closeHistoryDropdown() : openHistoryDropdown(); }
+
+function openHistoryDropdown() {
+  renderHistoryDropdown();
+  document.getElementById('webhook-hist-dropdown').classList.add('open');
+  document.getElementById('webhook-hist-btn').classList.add('active');
+  histDropOpen = true;
+}
+
+function closeHistoryDropdown() {
+  document.getElementById('webhook-hist-dropdown').classList.remove('open');
+  document.getElementById('webhook-hist-btn').classList.remove('active');
+  histDropOpen = false;
+}
+
+function clearWebhookHistory() {
+  webhookHistory = [];
+  localStorage.removeItem('n8n_wh_history');
+  renderHistoryDropdown();
+}
+
+function selectHistoryUrl(url) {
+  webhookUrl = url;
+  urlInput.value = url;
+  urlInputMobile.value = url;
+  localStorage.setItem('n8n_webhook', url);
+  saveUrlToHistory(url);
+  syncWebhookStyle();
+  urlDotState = '';
+  updateStatus();
+  closeHistoryDropdown();
+  startUrlCheck(url);
+}
+
+function renderHistoryDropdown() {
+  const root = document.getElementById('webhook-hist-dropdown');
+  root.innerHTML = '';
+
+  const head = document.createElement('div');
+  head.className = 'wh-head';
+  const title = document.createElement('span');
+  title.className = 'wh-head-title';
+  title.textContent = 'URL History';
+  head.appendChild(title);
+  if (webhookHistory.length > 0) {
+    const clr = document.createElement('button');
+    clr.className = 'wh-clear-btn';
+    clr.textContent = 'Clear all';
+    clr.onclick = (e) => { e.stopPropagation(); clearWebhookHistory(); };
+    head.appendChild(clr);
+  }
+  root.appendChild(head);
+
+  if (webhookHistory.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'wh-empty';
+    empty.textContent = 'No webhook URLs in history yet';
+    root.appendChild(empty);
+    return;
+  }
+
+  const list = document.createElement('div');
+  list.className = 'wh-list';
+  webhookHistory.forEach(entry => {
+    const type = getUrlType(entry.url);
+    const item = document.createElement('div');
+    item.className = 'wh-item';
+
+    const urlEl = document.createElement('div');
+    urlEl.className = 'wh-item-url';
+    urlEl.textContent = entry.url;
+    urlEl.title = entry.url;
+
+    const meta = document.createElement('div');
+    meta.className = 'wh-item-meta';
+
+    const badge = document.createElement('span');
+    badge.className = `wh-badge wh-${type}`;
+    badge.textContent = type.toUpperCase();
+
+    const time = document.createElement('span');
+    time.className = 'wh-time';
+    time.textContent = fmtHistTs(entry.ts);
+
+    const dot = document.createElement('span');
+    dot.className = 'wh-sdot';
+
+    const chkBtn = document.createElement('button');
+    chkBtn.className = 'wh-check-btn';
+    chkBtn.textContent = '⚡ Check';
+    chkBtn.title = 'Check if this webhook is reachable';
+    chkBtn.onclick = (e) => { e.stopPropagation(); checkWebhookStatus(entry.url, dot, chkBtn); };
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'wh-del-btn';
+    delBtn.textContent = '×';
+    delBtn.title = 'Remove from history';
+    delBtn.onclick = (e) => {
+      e.stopPropagation();
+      webhookHistory = webhookHistory.filter(h => h.url !== entry.url);
+      localStorage.setItem('n8n_wh_history', JSON.stringify(webhookHistory));
+      renderHistoryDropdown();
+    };
+
+    meta.append(badge, time, dot, chkBtn, delBtn);
+    item.append(urlEl, meta);
+    item.addEventListener('click', () => selectHistoryUrl(entry.url));
+    list.appendChild(item);
+  });
+  root.appendChild(list);
+}
+
+async function checkWebhookStatus(url, dotEl, btnEl) {
+  dotEl.className = 'wh-sdot vis err';
+  dotEl.style.cssText = '';
+  dotEl.title = 'Checking…';
+  btnEl.classList.add('checking');
+
+  const mkAbort = (ms) => {
+    const c = new AbortController();
+    const t = setTimeout(() => c.abort(), ms);
+    return { signal: c.signal, clear: () => clearTimeout(t) };
+  };
+
+  const a1 = mkAbort(6000);
+  try {
+    const res = await fetch(url, { method: 'GET', signal: a1.signal });
+    a1.clear();
+    dotEl.style.cssText = '';
+    dotEl.className = res.ok ? 'wh-sdot vis ok' : 'wh-sdot vis warn';
+    dotEl.title = `HTTP ${res.status}${res.ok ? ' OK' : ' ' + res.statusText}`;
+  } catch(e) {
+    a1.clear();
+    if (e.name === 'AbortError') {
+      dotEl.style.cssText = '';
+      dotEl.className = 'wh-sdot vis err';
+      dotEl.title = 'Timeout (6 s)';
+      btnEl.classList.remove('checking');
+      return;
+    }
+    const a2 = mkAbort(6000);
+    try {
+      await fetch(url, { method: 'GET', mode: 'no-cors', signal: a2.signal });
+      a2.clear();
+      dotEl.style.cssText = '';
+      dotEl.className = 'wh-sdot vis warn';
+      dotEl.title = 'Reachable (CORS blocked — server is up)';
+    } catch(e2) {
+      a2.clear();
+      dotEl.style.cssText = '';
+      dotEl.className = 'wh-sdot vis err';
+      dotEl.title = e2.name === 'AbortError' ? 'Timeout (6 s)' : `Unreachable: ${e2.message}`;
+    }
+  } finally {
+    btnEl.classList.remove('checking');
+  }
+}
+
+document.addEventListener('click', (e) => {
+  if (histDropOpen && !document.getElementById('webhook-wrap')?.contains(e.target)) {
+    closeHistoryDropdown();
+  }
+});
 
 // ── RENDER ──
 const ALLOWED_TAGS = /^\/?(b|i|u|strong|em|code|pre)$/i;
@@ -1249,6 +1752,7 @@ async function sendMessage() {
   const text = input.value.trim();
   if (!text) return;
   if (!webhookUrl) { toast(t('toastNoWebhook')); urlInput.focus(); return; }
+  saveUrlToHistory(webhookUrl);
 
   input.value = ''; resizeTextarea(input);
   appendMessage('user', text);
@@ -1275,6 +1779,7 @@ async function sendMessage() {
       appendError(`HTTP ${res.status}: ${res.statusText}`, 'errHttp');
       return;
     }
+    urlDotState = 'online';
 
     let data;
     try {
@@ -1312,6 +1817,7 @@ async function sendMessage() {
     document.getElementById('send-btn').disabled = false;
     updateStatus();
   }
+
 }
 
 function clearChat(anchor) {
@@ -1411,6 +1917,30 @@ function copySession() {
     .then(() => toast(t('toastCopied')))
     .catch(() => toast('🔑 ' + sessionId.slice(0,14) + '…'));
 }
+
+// ── CONSENT BANNER ──
+function renderConsentBanner() {
+  const textEl = document.getElementById('consent-text');
+  const btnEl  = document.getElementById('consent-btn');
+  textEl.innerHTML =
+    t('consentText') + ' ' +
+    `<a href="privacy-policy.html" target="_blank">${t('consentPrivacy')}</a>, ` +
+    `<a href="terms.html" target="_blank">${t('consentTerms')}</a> ` +
+    t('consentCookie');
+  btnEl.textContent = t('consentBtn');
+}
+
+function acceptConsent() {
+  localStorage.setItem('n8n_consent', '1');
+  document.getElementById('consent-banner').classList.add('hidden');
+}
+
+(function initConsent() {
+  renderConsentBanner();
+  if (localStorage.getItem('n8n_consent') === '1') {
+    document.getElementById('consent-banner').classList.add('hidden');
+  }
+})();
 </script>
 </body>
 </html>

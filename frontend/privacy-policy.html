@@ -184,13 +184,15 @@
   </div>
 
   <h2>1. Какие данные мы собираем</h2>
-  <p>При работе с сервисом могут собираться следующие данные:</p>
+  <p><strong>Сервис не сохраняет персональные данные пользователей на своих серверах.</strong> Вся пользовательская информация хранится исключительно локально в браузере (localStorage).</p>
+  <p>В браузере локально могут сохраняться:</p>
   <ul>
-    <li>Содержимое сообщений, отправляемых в чат (текст запросов и ответов).</li>
-    <li>Технические данные: IP-адрес, тип браузера, операционная система, дата и время обращений.</li>
-    <li>Файлы, загружаемые пользователем в рамках сессии (если применимо).</li>
-    <li>Настройки и предпочтения, сохранённые в браузере (localStorage).</li>
+    <li>Идентификатор сессии (sessionID) — генерируется автоматически, не привязан к личности пользователя.</li>
+    <li>Введённые пользователем запросы и ответы AI-модели (история чата).</li>
+    <li>История webhook URL, введённых в интерфейсе приложения.</li>
+    <li>Настройки интерфейса (тема, язык).</li>
   </ul>
+  <p>Запросы пользователя и ответы модели могут передаваться через указанный вами webhook URL во внешние сервисы. Условия обработки данных этими сервисами определяются их собственными политиками конфиденциальности.</p>
 
   <h2>2. Как мы используем данные</h2>
   <ul>
@@ -208,21 +210,35 @@
 
   <h2>5. Права пользователя</h2>
   <ul>
-    <li>Вы можете очистить историю чата в любое время через интерфейс приложения.</li>
-    <li>Вы вправе запросить удаление ваших данных, написав на <a href="mailto:gkorobkov@gmail.com">gkorobkov@gmail.com</a>.</li>
+    <li>Вы можете очистить историю чата в любое время через интерфейс приложения (кнопка «Очистить» в заголовке).</li>
+    <li>Вы можете удалить историю webhook URL — как полностью, так и отдельные записи — через интерфейс приложения (выпадающий список URL).</li>
+    <li>По любым вопросам вы можете обратиться по адресу <a href="mailto:gkorobkov@gmail.com">gkorobkov@gmail.com</a>. Приложение и его автор не гарантируют ответ на обращения и не принимают на себя обязательств по выполнению каких-либо запросов, включая запросы на удаление данных.</li>
     <li>Вы можете отказаться от использования сервиса в любой момент.</li>
   </ul>
 
-  <h2>6. Безопасность</h2>
+  <h2>6. Ответственность за использование внешних сервисов</h2>
+  <p>Приложение позволяет подключать произвольные webhook URL — как принадлежащие пользователю, так и сторонним организациям. Приложение и его автор не несут никакой ответственности за:</p>
+  <ul>
+    <li>использование данных, передаваемых через указанный webhook URL;</li>
+    <li>взаимодействие с внешними сервисами и их поведение;</li>
+    <li>сохранение, обработку или удаление данных внешними сервисами;</li>
+    <li>любые последствия, возникшие в результате подключения к стороннему URL.</li>
+  </ul>
+  <p>Пользователь самостоятельно несёт ответственность за выбор подключаемых сервисов и соблюдение их условий использования.</p>
+
+  <h2>7. Безопасность</h2>
   <p>Мы принимаем разумные технические меры для защиты ваших данных, однако ни одна система передачи данных через интернет не является абсолютно защищённой.</p>
 
   <h2>7. Использование файлов cookie</h2>
   <p>Приложение использует localStorage браузера для хранения пользовательских настроек и истории. Сторонние cookie не используются.</p>
 
-  <h2>8. Контакты</h2>
+  <h2>8. Использование файлов cookie</h2>
+  <p>Приложение использует localStorage браузера для хранения пользовательских настроек и истории. Сторонние cookie не используются.</p>
+
+  <h2>9. Контакты</h2>
   <p>По вопросам, связанным с конфиденциальностью, обращайтесь: <a href="mailto:gkorobkov@gmail.com">gkorobkov@gmail.com</a></p>
 
-  <div class="updated">Дата последнего обновления: 18 апреля 2026 г.</div>
+  <div class="updated">Дата последнего обновления: 19 апреля 2026 г.</div>
 </div>
 
 <!-- ENGLISH -->
@@ -236,13 +252,15 @@
   </div>
 
   <h2>1. Data We Collect</h2>
-  <p>When using the service, the following data may be collected:</p>
+  <p><strong>The service does not store personal data on its servers.</strong> All user information is stored exclusively in the browser's localStorage.</p>
+  <p>The following data may be stored locally in the browser:</p>
   <ul>
-    <li>Content of messages sent in the chat (text of requests and responses).</li>
-    <li>Technical data: IP address, browser type, operating system, date and time of requests.</li>
-    <li>Files uploaded by the user during a session (if applicable).</li>
-    <li>Settings and preferences stored in the browser (localStorage).</li>
+    <li>Session ID (sessionID) — generated automatically, not linked to the user's identity.</li>
+    <li>User queries and AI model responses (chat history).</li>
+    <li>History of webhook URLs entered in the application interface.</li>
+    <li>Interface preferences (theme, language).</li>
   </ul>
+  <p>User queries and model responses may be transmitted through the webhook URL you specify to external services. How those services handle your data is governed by their own privacy policies.</p>
 
   <h2>2. How We Use Data</h2>
   <ul>
@@ -260,21 +278,32 @@
 
   <h2>5. Your Rights</h2>
   <ul>
-    <li>You may clear your chat history at any time through the application interface.</li>
-    <li>You may request deletion of your data by writing to <a href="mailto:gkorobkov@gmail.com">gkorobkov@gmail.com</a>.</li>
+    <li>You may clear your chat history at any time through the application interface (the "Clear" button in the header).</li>
+    <li>You may delete webhook URL history — in full or individual entries — through the application interface (the URL dropdown).</li>
+    <li>For any questions you may contact <a href="mailto:gkorobkov@gmail.com">gkorobkov@gmail.com</a>. The application and its author do not guarantee a response and do not commit to fulfilling any requests, including requests for data deletion.</li>
     <li>You may stop using the service at any time.</li>
   </ul>
 
-  <h2>6. Security</h2>
+  <h2>6. Liability for External Services</h2>
+  <p>The application allows connecting arbitrary webhook URLs — owned by the user or by third parties. The application and its author accept no liability for:</p>
+  <ul>
+    <li>how data transmitted through a webhook URL is used;</li>
+    <li>interaction with external services and their behavior;</li>
+    <li>storage, processing, or deletion of data by external services;</li>
+    <li>any consequences arising from connecting to a third-party URL.</li>
+  </ul>
+  <p>The user is solely responsible for the choice of connected services and compliance with their terms of use.</p>
+
+  <h2>7. Security</h2>
   <p>We take reasonable technical measures to protect your data; however, no data transmission system over the internet is completely secure.</p>
 
   <h2>7. Cookies</h2>
   <p>The application uses browser localStorage to store user settings and history. No third-party cookies are used.</p>
 
-  <h2>8. Contact</h2>
+  <h2>9. Contact</h2>
   <p>For privacy-related inquiries, contact: <a href="mailto:gkorobkov@gmail.com">gkorobkov@gmail.com</a></p>
 
-  <div class="updated">Last updated: April 18, 2026</div>
+  <div class="updated">Last updated: April 19, 2026</div>
 </div>
 
 </main>
