@@ -1602,7 +1602,7 @@ const SVG_DEBUG_OFF =
     `<line x1="3" y1="21" x2="21" y2="3" stroke-width="2" stroke="currentColor"/>` +
   `</svg>`;
 
-let debugMode = localStorage.getItem('n8n_debug_mode') || 'expanded';
+let debugMode = localStorage.getItem('n8n_debug_mode') || 'collapsed';
 document.getElementById('toggle-debug').checked = debugMode !== 'hidden';
 
 function applyDebugMode(mode) {
