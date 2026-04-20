@@ -8,9 +8,9 @@ const DEBUG_JSON_MIN_LEN = 700;
 // Remove or reorder entries to control what appears and in what order.
 // Available: "agent_logic" | "tools_used" | "chat_history" | "latency" | "errors"
 const DEBUG_SECTIONS_ORDER = [
-  "agent_logic",
-  "tools_used",
   "chat_history",
+  "tools_used",
+  "agent_logic",
   "latency",
 ];
 
@@ -157,9 +157,9 @@ function buildDebugSection(maxLen = 0, forTg = false) {
 
     } else if (section === "chat_history") {
       if (Object.keys(chatHistory).length > 0) {
-        blocks.push(withDebugFormat("Chat History", chatHistory, maxLen));
+        blocks.push(withDebugFormat("Chat History for Agent", chatHistory, maxLen));
       } else {
-        blocks.push(`<b>Chat History</b>\n${noInfoTag("No chat history")}`);
+        blocks.push(`<b>Chat History for Agent</b>\n${noInfoTag("No chat history")}`);
       }
 
     } else if (section === "latency") {
