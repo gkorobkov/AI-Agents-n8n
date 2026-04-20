@@ -464,7 +464,19 @@
     background: var(--agent-bubble);
     border: 1px solid var(--border);
     border-radius: 4px var(--radius) var(--radius) var(--radius);
+    position: relative;
   }
+  .bubble-copy-btn {
+    position: absolute;
+    top: 7px; right: 9px;
+    background: none; border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    opacity: 1;
+    padding: 2px; line-height: 1;
+  }
+  .bubble-copy-btn:hover { color: var(--accent2); }
+  .bubble-copy-btn svg { width: 13px; height: 13px; }
   .msg-row.user .bubble {
     background: var(--user-bubble);
     border: 1px solid var(--border);
@@ -571,7 +583,7 @@
     margin: 0;
     padding: 8px 13px 10px;
     background: rgba(0,0,0,0.2);
-    color: var(--accent2);
+    color: #7ac1d4;
     white-space: pre-wrap;
     word-break: break-all;
     border-top: 1px solid var(--border);
@@ -1373,7 +1385,7 @@
 
 <script>
 // ── VERSION ──  (grep: APP_VERSION for build increment)
-const APP_VERSION = '0.1.18';
+const APP_VERSION = '0.1.19';
 
 // ── I18N ──
 const i18n = {
@@ -2037,10 +2049,6 @@ function makeMsgMeta(role, text, row, bubble) {
     meta.appendChild(mkBtn(SVG_RESEND, t('btnResend'), '',       () => { reSend(idx); showPopup(t('toastResent')); }));
     meta.appendChild(mkBtn(SVG_DELETE, t('btnDelete'), 'del-btn',() => deleteMessage(row)));
   } else {
-    meta.appendChild(mkBtn(SVG_COPY, t('btnCopy'), '', () => {
-      const txt = bubble.innerText || bubble.textContent;
-      navigator.clipboard.writeText(txt).then(() => toast(t('toastCopiedMsg')));
-    }));
     meta.appendChild(mkBtn(SVG_DELETE, t('btnDelete'), 'del-btn',() => deleteMessage(row)));
   }
 
@@ -2061,8 +2069,20 @@ function appendMessage(role, text) {
   wrap.className = 'bubble-wrap';
   const bubble = document.createElement('div');
   bubble.className = 'bubble';
-  if (role === 'agent') bubble.innerHTML = renderAgentText(text);
-  else bubble.textContent = text;
+  if (role === 'agent') {
+    bubble.innerHTML = renderAgentText(text);
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'bubble-copy-btn';
+    copyBtn.title = t('btnCopy');
+    copyBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+    copyBtn.onclick = () => {
+      const txt = bubble.innerText || bubble.textContent;
+      navigator.clipboard.writeText(txt).then(() => toast(t('toastCopiedMsg')));
+    };
+    bubble.appendChild(copyBtn);
+  } else {
+    bubble.textContent = text;
+  }
   wrap.appendChild(bubble);
   wrap.appendChild(makeMsgMeta(role, text, row, bubble));
   row.appendChild(avatar);
@@ -2109,11 +2129,13 @@ function appendDebug(row, debugData) {
 
   const isJsonContent = typeof debugData !== 'string';
   const body = document.createElement(isJsonContent ? 'pre' : 'div');
+  const DBG_STYLE = 'padding:8px 13px 10px;color:#7ac1d4;';
   if (isJsonContent) {
     body.textContent = content;
+    body.style.cssText = DBG_STYLE + 'font-size:11px;';
   } else {
     body.innerHTML = renderAgentText(content);
-    body.style.cssText = 'padding:8px 13px 10px;font-size:13px;line-height:1.55;';
+    body.style.cssText = DBG_STYLE + 'font-size:13px;line-height:1.55;';
   }
   details.appendChild(summary);
   details.appendChild(body);

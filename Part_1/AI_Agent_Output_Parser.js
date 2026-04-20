@@ -4,6 +4,16 @@ const DEBUG_JSON_MAX_LEN = 1800;
 const DEBUG_JSON_MID_LEN = 1200;
 const DEBUG_JSON_MIN_LEN = 700;
 
+// ─── Debug section order ───────────────────────────────────────────────────────
+// Remove or reorder entries to control what appears and in what order.
+// Available: "agent_logic" | "tools_used" | "chat_history" | "latency" | "errors"
+const DEBUG_SECTIONS_ORDER = [
+  "agent_logic",
+  "tools_used",
+  "chat_history",
+  "latency",
+];
+
 // ─── HTML utils ───────────────────────────────────────────────────────────────
 
 function escHtml(s) {
@@ -115,58 +125,86 @@ const is_agent_error = response_type === "agent_error";
 
 const isWebhook = String(chatMemory.message_source ?? $json.message_source ?? "").toUpperCase() === "WH";
 
-// ─── Build output with cascading size limits ──────────────────────────────────
+// ─── Build functions ──────────────────────────────────────────────────────────
 
 function withDebugFormat(title, value, maxLen = 0) {
   const text = typeof value === "string" ? value : safeStringify(value);
   const shortened = maxLen > 0 ? shortenText(text, maxLen) : text;
-  const titlePart = title ? `<i>${escHtml(title)}</i>\n` : "";
+  const titlePart = title ? `<b>${escHtml(title)}</b>\n` : "";
   return `${titlePart}<code>${escHtml(shortened)}</code>`;
 }
 
-function buildOutput(maxLen = 0, includeAgentLogic = true) {
-  if (!DEBUG_ENABLED) return body;
-  const blocks = [body];
+// Debug-only section (без body) — используется для full_debug (WH) и inline TG
+function buildDebugSection(maxLen = 0, forTg = false) {
+  if (!DEBUG_ENABLED) return "";
+  const noInfoTag = (text) => `<code>${text}</code>`;
+  const blocks = [];
+
   if (parse_error)    blocks.push(withDebugFormat("[debug] parse_error", parse_error));
   if (schema_warning) blocks.push(withDebugFormat("[debug] schema_warning", schema_warning));
-  if (includeAgentLogic) {
-    blocks.push(`<i> Debug: </i>`);
-    blocks.push(withDebugFormat("Agent Logic", agent_logic, maxLen));
 
-    const noInfoTag = (text) => isWebhook ? `<small>${text}</small>` : `<code>${text}</code>`;
+  for (const section of DEBUG_SECTIONS_ORDER) {
+    if (section === "agent_logic") {
+      blocks.push(withDebugFormat("Agent Logic", agent_logic, maxLen));
 
-    if (intermediateSteps.length > 0) {
-      const stepsText = maxLen > 0 ? shortenText(intermediate_steps_summary, maxLen) : intermediate_steps_summary;
-      blocks.push(`<i>Tools used</i>\n<code>${escHtml(stepsText)}</code>`);
-    } else {
-      blocks.push(`<i>Tools used</i>\n${noInfoTag("No intermediate steps")}`);
-    }
+    } else if (section === "tools_used") {
+      if (intermediateSteps.length > 0) {
+        const stepsText = maxLen > 0 ? shortenText(intermediate_steps_summary, maxLen) : intermediate_steps_summary;
+        blocks.push(`<b>Tools used</b>\n<code>${escHtml(stepsText)}</code>`);
+      } else {
+        blocks.push(`<b>Tools used</b>\n${noInfoTag("No intermediate steps")}`);
+      }
 
-    if (Object.keys(chatHistory).length > 0) {
-      blocks.push(withDebugFormat("Chat History", chatHistory, maxLen));
-    } else {
-      blocks.push(`<i>Chat History</i>\n${noInfoTag("No chat history")}`);
+    } else if (section === "chat_history") {
+      if (Object.keys(chatHistory).length > 0) {
+        blocks.push(withDebugFormat("Chat History", chatHistory, maxLen));
+      } else {
+        blocks.push(`<b>Chat History</b>\n${noInfoTag("No chat history")}`);
+      }
+
+    } else if (section === "latency") {
+      const latencyStr = latency_ms < 1000
+        ? `${latency_ms} ms`
+        : `${(latency_ms / 1000).toFixed(1)} s`;
+      blocks.push(`<b>Latency</b>\n<code>${latencyStr}</code>`);
     }
   }
+
   return blocks.filter(Boolean).join("\n\n");
 }
 
-const candidates = [
-  [DEBUG_JSON_MAX_LEN, true],
-  [DEBUG_JSON_MID_LEN, true],
-  [DEBUG_JSON_MIN_LEN, true],
-  [0, false],
-  null,
-];
+// TG: body + debug inline, с каскадным сокращением
+function buildTgOutput(maxLen = 0, includeDebug = true) {
+  if (!includeDebug || !DEBUG_ENABLED) return body;
+  return [body, buildDebugSection(maxLen, true)].filter(Boolean).join("\n\n");
+}
 
-const output_clean = is_agent_error
-  ? ""
-  : isWebhook
-    ? buildOutput(0, true)
-    : candidates.reduce((acc, p) =>
-        acc.length <= TELEGRAM_SOFT_LIMIT ? acc : (p ? buildOutput(...p) : body),
-        buildOutput(DEBUG_JSON_MAX_LEN, true)
-      );
+// ─── Compute outputs ──────────────────────────────────────────────────────────
+
+let output_clean, full_debug;
+
+if (is_agent_error) {
+  output_clean = "";
+  full_debug = "";
+} else if (isWebhook) {
+  // WH: output_clean = только ответ модели; full_debug = отдельный debug-блок
+  output_clean = body;
+  full_debug = buildDebugSection(0, false);
+} else {
+  // TG: output_clean = body + debug inline, каскадное сокращение
+  const candidates = [
+    [DEBUG_JSON_MAX_LEN, true],
+    [DEBUG_JSON_MID_LEN, true],
+    [DEBUG_JSON_MIN_LEN, true],
+    [0, false],
+    null,
+  ];
+  output_clean = candidates.reduce((acc, p) =>
+    acc.length <= TELEGRAM_SOFT_LIMIT ? acc : (p ? buildTgOutput(...p) : body),
+    buildTgOutput(DEBUG_JSON_MAX_LEN, true)
+  );
+  full_debug = "";
+}
 
 // ─── Return ───────────────────────────────────────────────────────────────────
 
@@ -179,8 +217,10 @@ return [{
     sessionId: chatMemory.sessionId,
     output_short,
     output_clean,
+    full_debug,
     latency_ms,
     intermediate_steps_summary,
+    chat_history: chatHistory,
     is_agent_error,
     success,
     agent_logic,
