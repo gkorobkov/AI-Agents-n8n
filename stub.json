@@ -1,0 +1,14 @@
+{
+  "text": "<b>Москва</b>\n\n<b>Погода</b>\n7°C, облачно, ветер: 14 км/ч, данные измерены сегодня в 19:00.\n\n<b>Интересное</b>\nМосква — столица России, крупнейший город страны с населением более 12 млн человек. Основана в 1147 году.",
+  "debug": {
+    "response_type": "json",
+    "latency_ms": 1842,
+    "success": true,
+    "agent_logic": "Пользователь спросил про город. Определил координаты через геокодер, запросил погоду, сформировал ответ.",
+    "intermediate_steps_summary": "1. tool=Geocode_HTTP_Request | args={\"city\":\"Москва\"}\n2. tool=Weather_HTTP_Request | args={\"lat\":\"55.75222\",\"lon\":\"37.61556\"}",
+    "chat_history": {
+      "last_user_question": "Расскажи про Москву",
+      "last_agent_reply": "[stub]"
+    }
+  }
+}
