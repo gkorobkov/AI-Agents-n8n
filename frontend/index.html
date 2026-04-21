@@ -595,6 +595,8 @@
   /* copy button always visible on agent messages */
   .msg-row.agent .resend-btn { opacity: 1; }
   .bubble .plain { white-space: pre-wrap; }
+  .bubble a { color: var(--accent2); text-decoration: underline; text-underline-offset: 2px; }
+  .bubble a:hover { opacity: 0.8; }
 
   /* typing */
   .typing-bubble { display:flex; align-items:center; gap:5px; padding:14px 16px; }
@@ -1385,7 +1387,7 @@
 
 <script>
 // ── VERSION ──  (grep: APP_VERSION for build increment)
-const APP_VERSION = '0.1.19';
+const APP_VERSION = '0.1.21';
 
 // ── I18N ──
 const i18n = {
@@ -1668,7 +1670,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && drawerOpen
 let sessionId = localStorage.getItem('n8n_session') || generateSessionId();
 let webhookUrl = localStorage.getItem('n8n_webhook') || '';
 let isThinking = false;
-const INITIAL_SUGGESTIONS = ['Что ты умеешь?', 'Расскажи о себе'];
+const INITIAL_SUGGESTIONS = ['Что ты умеешь?', 'Расскажи о себе', 'Расскажи про Москву'];
 
 // Override webhookUrl from ?webhookurl= query param, then strip it from the address bar
 (function() {
@@ -2016,6 +2018,12 @@ function renderAgentText(raw) {
     return `<span class="plain">${escaped}</span>`;
   }
   const clean = raw.replace(/<\/?([a-zA-Z][a-zA-Z0-9]*)[^>]*>/g, (match, tag) => {
+    if (tag.toLowerCase() === 'a') {
+      if (match.startsWith('</')) return '</a>';
+      const href = (match.match(/href\s*=\s*["']([^"']*)["']/i) || [])[1] || '';
+      if (!/^https?:\/\//i.test(href)) return '';
+      return `<a href="${href}" target="_blank" rel="noopener noreferrer">`;
+    }
     return ALLOWED_TAGS.test(tag) ? match : '';
   });
   return clean.replace(/\n/g, '<br>');

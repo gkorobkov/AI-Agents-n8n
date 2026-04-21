@@ -22,8 +22,8 @@ function escHtml(s) {
 
 function sanitizeTelegramHtml(input) {
   const allowedTags = [];
-  const protected_ = String(input ?? "").replace(/<\/?(b|i|u|code|pre)>/gi, (m) => {
-    allowedTags.push(m.toLowerCase());
+  const protected_ = String(input ?? "").replace(/<\/?(b|i|u|code|pre)>|<a\b[^>]*>|<\/a>/gi, (m) => {
+    allowedTags.push(m);
     return `___TG_${allowedTags.length - 1}___`;
   });
   let out = escHtml(protected_);
