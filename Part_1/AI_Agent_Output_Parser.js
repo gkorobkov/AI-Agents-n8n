@@ -145,21 +145,21 @@ function buildDebugSection(maxLen = 0, forTg = false) {
 
   for (const section of DEBUG_SECTIONS_ORDER) {
     if (section === "agent_logic") {
-      blocks.push(withDebugFormat("Agent Logic", agent_logic, maxLen));
+      blocks.push(withDebugFormat("LLM Logic", agent_logic, maxLen));
 
     } else if (section === "tools_used") {
       if (intermediateSteps.length > 0) {
         const stepsText = maxLen > 0 ? shortenText(intermediate_steps_summary, maxLen) : intermediate_steps_summary;
-        blocks.push(`<b>Tools used</b>\n<code>${escHtml(stepsText)}</code>`);
+        blocks.push(`<b>Agent Tools used</b>\n<code>${escHtml(stepsText)}</code>`);
       } else {
-        blocks.push(`<b>Tools used</b>\n${noInfoTag("No intermediate steps")}`);
+        blocks.push(`<b>Agent Tools used</b>\n${noInfoTag("No intermediate steps")}`);
       }
 
     } else if (section === "chat_history") {
       if (Object.keys(chatHistory).length > 0) {
-        blocks.push(withDebugFormat("Chat History for Agent", chatHistory, maxLen));
+        blocks.push(withDebugFormat("Agent Chat History for LLM", chatHistory, maxLen));
       } else {
-        blocks.push(`<b>Chat History for Agent</b>\n${noInfoTag("No chat history")}`);
+        blocks.push(`<b>Agent Chat History for LLM</b>\n${noInfoTag("No chat history")}`);
       }
 
     } else if (section === "latency") {

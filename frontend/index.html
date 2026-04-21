@@ -1,11 +1,38 @@
 <!DOCTYPE html>
 <html lang="ru" data-theme="dark">
 <head>
+<script>
+// ╔══════════════════════════════════════════════════════════╗
+// ║ ── VERSION ──  (grep: APP_VERSION for build increment)   ║
+// ╚══════════════════════════════════════════════════════════╝
+const APP_VERSION = '0.1.22';
+
+// ╔══════════════════════════════════════════════════════════╗
+// ║                   CONFIGURABLE DEFAULTS                  ║
+// ╚══════════════════════════════════════════════════════════╝
+
+// Default debug panel state for new users: "expanded" | "collapsed" | "hidden"
+const CFG_DEBUG_DEFAULT_MODE = 'collapsed';
+
+// Initial suggestion chips shown before first message
+const CFG_INITIAL_SUGGESTIONS = ['Что ты умеешь?', 'Расскажи о себе', 'Расскажи про Москву'];
+
+// Max webhook URL entries kept in history dropdown
+const CFG_WEBHOOK_HISTORY_MAX = 10;
+
+// Request timeout for webhook POST (milliseconds)
+const CFG_REQUEST_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+
+// How long the "Undo delete" popup stays visible (milliseconds)
+const CFG_UNDO_TIMEOUT_MS = 10 * 1000; // 10 seconds
+</script>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI Agent Chat</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Sora:wght@300;400;600&display=swap" rel="stylesheet">
+
 <style>
   :root {
     --bg: #12151d;
@@ -760,6 +787,15 @@
   #toast button:hover {
     background: rgba(79,255,176,0.14);
   }
+  #toast button.toast-close {
+    border: none; background: none; padding: 0 2px;
+    font-size: 15px; line-height: 1; opacity: 0.5;
+    margin-left: auto;
+  }
+  #toast button.toast-close:hover { background: none; opacity: 1; }
+  #toast .toast-countdown {
+    opacity: 0.4; font-size: 10px; min-width: 12px; text-align: center;
+  }
 
   /* Drawer input (webhook on mobile) */
   .drawer-input {
@@ -820,29 +856,22 @@
   .resend-btn {
     background: transparent;
     border: none;
+    border-radius: 4px;
     color: var(--text-muted);
     cursor: pointer;
-    font-size: 11px;
-    padding: 0 3px;
-    opacity: 1;
-    transition: opacity 0.2s, color 0.2s;
-    vertical-align: middle;
-    line-height: 1;
+    padding: 0;
+    width: 26px; height: 26px;
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.15s, color 0.15s;
   }
-  .msg-row.user .resend-btn { opacity: 1; color: var(--accent); }
-  .msg-row.agent .resend-btn { opacity: 0.8; color: var(--text-muted); }
-  .resend-btn:hover { color: var(--accent2); }
-  .resend-btn svg { width: 11px; height: 11px; }
+  .msg-row .resend-btn { color: var(--text-muted); }
+  .resend-btn:hover { background: rgba(79,255,176,0.1); color: var(--accent2); }
+  .resend-btn.del-btn:hover { background: rgba(255,80,80,0.12); color: var(--error); }
+  .resend-btn svg { width: 14px; height: 14px; }
 
   @media (pointer: coarse) {
-    .resend-btn {
-      padding: 6px 8px;
-      min-width: 36px;
-      min-height: 36px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
+    .resend-btn { width: 36px; height: 36px; }
     .resend-btn svg { width: 18px; height: 18px; }
   }
 
@@ -1025,9 +1054,20 @@
     border-bottom: 1px solid var(--border);
     cursor: pointer;
     transition: background 0.13s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
   .wh-item:last-child { border-bottom: none; }
   .wh-item:hover { background: var(--surface2); }
+
+  .wh-item-left {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
 
   .wh-item-url {
     font-family: var(--font-mono);
@@ -1036,7 +1076,6 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    margin-bottom: 4px;
   }
 
   .wh-item-meta {
@@ -1104,7 +1143,6 @@
     font-size: 9px;
     color: var(--text-muted);
     font-family: var(--font-mono);
-    flex: 1;
   }
 
   .wh-sdot {
@@ -1118,35 +1156,51 @@
   .wh-sdot.warn { background: #f0a500;         box-shadow: 0 0 5px #f0a500; }
   .wh-sdot.err  { background: var(--error);    box-shadow: 0 0 5px var(--error); }
 
-  .wh-check-btn {
+  .wh-actions {
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    gap: 3px;
+    align-self: stretch;
+    width: 84px;
+  }
+  .wh-actions-row {
+    display: flex;
+    flex: 1;
+    gap: 3px;
+    align-items: center;
+  }
+  .wh-actions-row:last-child { justify-content: flex-end; }
+  .wh-check-btn, .wh-copy-btn, .wh-share-btn, .wh-del-btn {
     background: transparent;
     border: 1px solid var(--border);
     color: var(--text-muted);
-    font-size: 8px;
-    font-family: var(--font-mono);
-    padding: 2px 5px;
-    border-radius: 3px;
+    border-radius: 4px;
     cursor: pointer;
-    flex-shrink: 0;
     transition: border-color 0.2s, color 0.2s, opacity 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+  }
+  .wh-check-btn {
+    flex: 1;
+    height: 26px;
+    font-size: 10px;
+    font-family: var(--font-mono);
     white-space: nowrap;
+    padding: 0 8px;
   }
-  .wh-check-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+  .wh-check-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+  .wh-copy-btn, .wh-share-btn, .wh-del-btn { width: 26px; height: 26px; padding: 0; flex-shrink: 0; }
+  .wh-copy-btn svg, .wh-share-btn svg, .wh-del-btn svg { width: 14px; height: 14px; }
+  .wh-check-btn:hover  { border-color: var(--accent); color: var(--accent); }
   .wh-check-btn.checking { opacity: 0.4; pointer-events: none; }
-
-  .wh-del-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    font-size: 13px;
-    line-height: 1;
-    padding: 0 2px;
-    cursor: pointer;
-    flex-shrink: 0;
-    opacity: 0;
-    transition: color 0.2s, opacity 0.2s;
-  }
-  .wh-item:hover .wh-del-btn { opacity: 1; }
+  .wh-copy-btn:hover   { border-color: var(--accent2); color: var(--accent2); }
+  .wh-copy-btn.copied  { border-color: var(--accent2); color: var(--accent2); }
+  .wh-share-btn:hover  { border-color: var(--accent2); color: var(--accent2); }
+  .wh-share-btn.copied { border-color: var(--accent2); color: var(--accent2); }
+  .wh-del-btn:hover    { border-color: var(--error); color: var(--error); }
   .wh-del-btn:hover { color: var(--error); }
 </style>
 </head>
@@ -1386,9 +1440,6 @@
 </div>
 
 <script>
-// ── VERSION ──  (grep: APP_VERSION for build increment)
-const APP_VERSION = '0.1.21';
-
 // ── I18N ──
 const i18n = {
   en: {
@@ -1604,7 +1655,7 @@ const SVG_DEBUG_OFF =
     `<line x1="3" y1="21" x2="21" y2="3" stroke-width="2" stroke="currentColor"/>` +
   `</svg>`;
 
-let debugMode = localStorage.getItem('n8n_debug_mode') || 'collapsed';
+let debugMode = localStorage.getItem('n8n_debug_mode') || CFG_DEBUG_DEFAULT_MODE;
 document.getElementById('toggle-debug').checked = debugMode !== 'hidden';
 
 function applyDebugMode(mode) {
@@ -1670,7 +1721,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && drawerOpen
 let sessionId = localStorage.getItem('n8n_session') || generateSessionId();
 let webhookUrl = localStorage.getItem('n8n_webhook') || '';
 let isThinking = false;
-const INITIAL_SUGGESTIONS = ['Что ты умеешь?', 'Расскажи о себе', 'Расскажи про Москву'];
+const INITIAL_SUGGESTIONS = CFG_INITIAL_SUGGESTIONS;
 
 // Override webhookUrl from ?webhookurl= query param, then strip it from the address bar
 (function() {
@@ -1708,6 +1759,13 @@ urlInput.value = webhookUrl;
 urlInputMobile.value = webhookUrl;
 syncWebhookStyle();
 
+let _urlCheckTimer = null;
+function scheduleUrlCheck(url, delay = 500) {
+  clearTimeout(_urlCheckTimer);
+  if (!url) return;
+  _urlCheckTimer = setTimeout(() => { saveUrlToHistory(url); startUrlCheck(url); }, delay);
+}
+
 urlInput.addEventListener('input', () => {
   webhookUrl = urlInput.value.trim();
   urlInputMobile.value = webhookUrl;
@@ -1715,9 +1773,13 @@ urlInput.addEventListener('input', () => {
   urlDotState = '';
   updateStatus();
   syncWebhookStyle();
+  scheduleUrlCheck(webhookUrl);
+});
+urlInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter' || e.key === 'Tab') scheduleUrlCheck(webhookUrl, 0);
 });
 urlInput.addEventListener('blur', () => {
-  if (webhookUrl) { saveUrlToHistory(webhookUrl); startUrlCheck(webhookUrl); }
+  if (webhookUrl) scheduleUrlCheck(webhookUrl, 0);
 });
 
 urlInputMobile.addEventListener('input', () => {
@@ -1727,9 +1789,13 @@ urlInputMobile.addEventListener('input', () => {
   urlDotState = '';
   updateStatus();
   syncWebhookStyle();
+  scheduleUrlCheck(webhookUrl);
+});
+urlInputMobile.addEventListener('keydown', e => {
+  if (e.key === 'Enter' || e.key === 'Tab') scheduleUrlCheck(webhookUrl, 0);
 });
 urlInputMobile.addEventListener('blur', () => {
-  if (webhookUrl) { saveUrlToHistory(webhookUrl); startUrlCheck(webhookUrl); }
+  if (webhookUrl) scheduleUrlCheck(webhookUrl, 0);
 });
 
 function syncWebhookStyle() {
@@ -1786,21 +1852,25 @@ function updateStatus() {
 }
 
 async function probeUrlStatus(url) {
-  const mkA = (ms) => { const c = new AbortController(); const t = setTimeout(() => c.abort(), ms); return { signal: c.signal, clear: () => clearTimeout(t) }; };
-  const a1 = mkA(5000);
+  const ac = new AbortController();
+  const t = setTimeout(() => ac.abort(), 8000);
   try {
-    const res = await fetch(url, { method: 'GET', signal: a1.signal });
-    a1.clear();
-    return res.ok ? 'online' : 'error';
+    if (!url.startsWith('http://') && !url.startsWith('https://')) return 'online';
+    const isLocal = /^https?:\/\/(localhost|127\.)/.test(url);
+    if (isLocal) {
+      const res = await fetch(url, { method: 'GET', signal: ac.signal });
+      return res.ok || res.status === 404 ? 'online' : 'warn';
+    }
+    // Cross-origin: n8n adds Access-Control-Allow-Origin only for POST preflights.
+    // GET/HEAD/OPTIONS all return 500 or 204 without CORS headers → browser blocks reads.
+    // mode:'no-cors' skips CORS checks → any HTTP response resolves (opaque), network errors throw.
+    await fetch(url, { method: 'GET', mode: 'no-cors', signal: ac.signal });
+    return 'online'; // server responded (opaque — can't read status, but server is alive)
   } catch(e) {
-    a1.clear();
-    if (e.name === 'AbortError') return 'error';
-    const a2 = mkA(5000);
-    try {
-      await fetch(url, { method: 'GET', mode: 'no-cors', signal: a2.signal });
-      a2.clear();
-      return 'warn';
-    } catch(e2) { a2.clear(); return 'error'; }
+    console.warn('[probeUrlStatus]', e.name, e.message, url);
+    return 'error';
+  } finally {
+    clearTimeout(t);
   }
 }
 
@@ -1820,7 +1890,7 @@ if (webhookUrl) startUrlCheck(webhookUrl);
 showSuggestions(INITIAL_SUGGESTIONS);
 
 // ── WEBHOOK URL HISTORY ──
-const WEBHOOK_HISTORY_MAX = 10;
+const WEBHOOK_HISTORY_MAX = CFG_WEBHOOK_HISTORY_MAX;
 
 let webhookHistory = (() => {
   try { return JSON.parse(localStorage.getItem('n8n_wh_history') || '[]'); }
@@ -1931,15 +2001,45 @@ function renderHistoryDropdown() {
     const dot = document.createElement('span');
     dot.className = 'wh-sdot';
 
+    const SVG_LIGHTNING = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`;
+    const SVG_COPY_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+    const SVG_SHARE_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>`;
+    const SVG_TRASH = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
+
     const chkBtn = document.createElement('button');
     chkBtn.className = 'wh-check-btn';
-    chkBtn.textContent = '⚡ Check';
+    chkBtn.innerHTML = SVG_LIGHTNING + 'Check';
     chkBtn.title = 'Check if this webhook is reachable';
     chkBtn.onclick = (e) => { e.stopPropagation(); checkWebhookStatus(entry.url, dot, chkBtn); };
 
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'wh-copy-btn';
+    copyBtn.innerHTML = SVG_COPY_ICON;
+    copyBtn.title = 'Copy webhook URL';
+    copyBtn.onclick = (e) => {
+      e.stopPropagation();
+      navigator.clipboard.writeText(entry.url).then(() => {
+        copyBtn.classList.add('copied');
+        setTimeout(() => copyBtn.classList.remove('copied'), 1800);
+      });
+    };
+
+    const shareBtn = document.createElement('button');
+    shareBtn.className = 'wh-share-btn';
+    shareBtn.innerHTML = SVG_SHARE_ICON;
+    shareBtn.title = 'Copy shareable page link';
+    shareBtn.onclick = (e) => {
+      e.stopPropagation();
+      const base = (window.location.origin + window.location.pathname).replace(/\/$/, '/');
+      navigator.clipboard.writeText(base + '?webhookurl=' + entry.url).then(() => {
+        shareBtn.classList.add('copied');
+        setTimeout(() => shareBtn.classList.remove('copied'), 1800);
+      });
+    };
+
     const delBtn = document.createElement('button');
     delBtn.className = 'wh-del-btn';
-    delBtn.textContent = '×';
+    delBtn.innerHTML = SVG_TRASH;
     delBtn.title = 'Remove from history';
     delBtn.onclick = (e) => {
       e.stopPropagation();
@@ -1948,8 +2048,25 @@ function renderHistoryDropdown() {
       renderHistoryDropdown();
     };
 
-    meta.append(badge, time, dot, chkBtn, delBtn);
-    item.append(urlEl, meta);
+    const row1 = document.createElement('div');
+    row1.className = 'wh-actions-row';
+    row1.appendChild(chkBtn);
+
+    const row2 = document.createElement('div');
+    row2.className = 'wh-actions-row';
+    row2.append(copyBtn, shareBtn, delBtn);
+
+    const actions = document.createElement('div');
+    actions.className = 'wh-actions';
+    actions.append(row1, row2);
+
+    meta.append(badge, time, dot);
+
+    const left = document.createElement('div');
+    left.className = 'wh-item-left';
+    left.append(urlEl, meta);
+
+    item.append(left, actions);
     item.addEventListener('click', () => selectHistoryUrl(entry.url));
     list.appendChild(item);
   });
@@ -1958,47 +2075,32 @@ function renderHistoryDropdown() {
 
 async function checkWebhookStatus(url, dotEl, btnEl) {
   dotEl.className = 'wh-sdot vis err';
-  dotEl.style.cssText = '';
   dotEl.title = 'Checking…';
-  btnEl.classList.add('checking');
+  if (btnEl) btnEl.classList.add('checking');
 
-  const mkAbort = (ms) => {
-    const c = new AbortController();
-    const t = setTimeout(() => c.abort(), ms);
-    return { signal: c.signal, clear: () => clearTimeout(t) };
-  };
+  const ac = new AbortController();
+  const t = setTimeout(() => ac.abort(), 8000);
 
-  const a1 = mkAbort(6000);
   try {
-    const res = await fetch(url, { method: 'GET', signal: a1.signal });
-    a1.clear();
-    dotEl.style.cssText = '';
-    dotEl.className = res.ok ? 'wh-sdot vis ok' : 'wh-sdot vis warn';
-    dotEl.title = `HTTP ${res.status}${res.ok ? ' OK' : ' ' + res.statusText}`;
+    const isLocal = /^https?:\/\/(localhost|127\.)/.test(url);
+    if (isLocal) {
+      const res = await fetch(url, { method: 'GET', signal: ac.signal });
+      dotEl.className = 'wh-sdot vis ' + (res.ok || res.status === 404 ? 'ok' : 'warn');
+      dotEl.title = res.ok || res.status === 404 ? 'Webhook active' : `HTTP ${res.status}`;
+    } else {
+      // Cross-origin: n8n only sends CORS headers for POST preflights, not for any readable probe.
+      // no-cors: any HTTP response = server alive; network errors throw.
+      await fetch(url, { method: 'GET', mode: 'no-cors', signal: ac.signal });
+      dotEl.className = 'wh-sdot vis ok';
+      dotEl.title = 'Webhook server reachable';
+    }
   } catch(e) {
-    a1.clear();
-    if (e.name === 'AbortError') {
-      dotEl.style.cssText = '';
-      dotEl.className = 'wh-sdot vis err';
-      dotEl.title = 'Timeout (6 s)';
-      btnEl.classList.remove('checking');
-      return;
-    }
-    const a2 = mkAbort(6000);
-    try {
-      await fetch(url, { method: 'GET', mode: 'no-cors', signal: a2.signal });
-      a2.clear();
-      dotEl.style.cssText = '';
-      dotEl.className = 'wh-sdot vis warn';
-      dotEl.title = 'Reachable (CORS blocked — server is up)';
-    } catch(e2) {
-      a2.clear();
-      dotEl.style.cssText = '';
-      dotEl.className = 'wh-sdot vis err';
-      dotEl.title = e2.name === 'AbortError' ? 'Timeout (6 s)' : `Unreachable: ${e2.message}`;
-    }
+    console.warn('[checkWebhookStatus]', e.name, e.message, url);
+    dotEl.className = 'wh-sdot vis err';
+    dotEl.title = e.name === 'AbortError' ? 'Timeout (8 s)' : 'Not registered or unreachable';
   } finally {
-    btnEl.classList.remove('checking');
+    clearTimeout(t);
+    if (btnEl) btnEl.classList.remove('checking');
   }
 }
 
@@ -2281,7 +2383,7 @@ async function sendMessage() {
   }
 
   const abortCtrl = new AbortController();
-  const timeoutId = setTimeout(() => abortCtrl.abort(), 10 * 60 * 1000);
+  const timeoutId = setTimeout(() => abortCtrl.abort(), CFG_REQUEST_TIMEOUT_MS);
 
   try {
     const res = await (isFilePath
@@ -2403,6 +2505,7 @@ let pendingDeletion = null;
 function showPopup(message, options = {}) {
   const el = document.getElementById('toast');
   clearTimeout(el._t);
+  clearInterval(el._iv);
   el.classList.remove('show');
   el.innerHTML = '';
 
@@ -2410,15 +2513,34 @@ function showPopup(message, options = {}) {
   text.textContent = message;
   el.appendChild(text);
 
+  if (options.countdown && options.duration) {
+    const cd = document.createElement('span');
+    cd.className = 'toast-countdown';
+    let secs = Math.ceil(options.duration / 1000);
+    cd.textContent = secs;
+    el.appendChild(cd);
+    el._iv = setInterval(() => {
+      secs--;
+      if (secs > 0) cd.textContent = secs;
+      else clearInterval(el._iv);
+    }, 1000);
+  }
+
   if (options.actionLabel && typeof options.onAction === 'function') {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.textContent = options.actionLabel;
-    btn.onclick = () => {
-      options.onAction();
-      hidePopup();
-    };
+    btn.onclick = () => { options.onAction(); hidePopup(); };
     el.appendChild(btn);
+  }
+
+  if (options.closable) {
+    const x = document.createElement('button');
+    x.type = 'button';
+    x.className = 'toast-close';
+    x.textContent = '×';
+    x.onclick = hidePopup;
+    el.appendChild(x);
   }
 
   el.classList.toggle('warn', options.type === 'warn');
@@ -2434,6 +2556,7 @@ function toast(msg) {
 function hidePopup() {
   const el = document.getElementById('toast');
   clearTimeout(el._t);
+  clearInterval(el._iv);
   el.classList.remove('show');
 }
 
@@ -2455,13 +2578,15 @@ function deleteMessage(row) {
     timeoutId: setTimeout(() => {
       pendingDeletion = null;
       hidePopup();
-    }, 6000)
+    }, CFG_UNDO_TIMEOUT_MS)
   };
 
   showPopup(t('toastDeleted'), {
     actionLabel: t('btnUndo'),
     onAction: undoDelete,
-    duration: 6000
+    duration: CFG_UNDO_TIMEOUT_MS,
+    closable: true,
+    countdown: true,
   });
 }
 
