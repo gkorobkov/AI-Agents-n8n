@@ -5,7 +5,7 @@
 // ╔══════════════════════════════════════════════════════════╗
 // ║ ── VERSION ──  (grep: APP_VERSION for build increment)   ║
 // ╚══════════════════════════════════════════════════════════╝
-const APP_VERSION = '0.1.22';
+const APP_VERSION = '0.1.23';
 
 // ╔══════════════════════════════════════════════════════════╗
 // ║                   CONFIGURABLE DEFAULTS                  ║
@@ -18,13 +18,16 @@ const CFG_DEBUG_DEFAULT_MODE = 'collapsed';
 const CFG_INITIAL_SUGGESTIONS = ['Что ты умеешь?', 'Расскажи о себе', 'Расскажи про Москву'];
 
 // Max webhook URL entries kept in history dropdown
-const CFG_WEBHOOK_HISTORY_MAX = 10;
+const CFG_WEBHOOK_HISTORY_MAX = 20;
 
 // Request timeout for webhook POST (milliseconds)
-const CFG_REQUEST_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+const CFG_REQUEST_TIMEOUT_MS = 10 * 60 * 1000; // 5 minutes
 
 // How long the "Undo delete" popup stays visible (milliseconds)
 const CFG_UNDO_TIMEOUT_MS = 10 * 1000; // 10 seconds
+
+// Show "Check" button in webhook history dropdown
+const CFG_SHOW_CHECK_BTN = false;
 </script>
 
 <meta charset="UTF-8">
@@ -1440,6 +1443,22 @@ const CFG_UNDO_TIMEOUT_MS = 10 * 1000; // 10 seconds
 </div>
 
 <script>
+// ── UTILS ──
+function copyText(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(text);
+  }
+  // fallback for file:// or non-HTTPS contexts
+  const el = document.createElement('textarea');
+  el.value = text;
+  el.style.cssText = 'position:fixed;left:-9999px;top:-9999px;opacity:0';
+  document.body.appendChild(el);
+  el.select();
+  try { document.execCommand('copy'); } catch(_) {}
+  document.body.removeChild(el);
+  return Promise.resolve();
+}
+
 // ── I18N ──
 const i18n = {
   en: {
@@ -2018,7 +2037,7 @@ function renderHistoryDropdown() {
     copyBtn.title = 'Copy webhook URL';
     copyBtn.onclick = (e) => {
       e.stopPropagation();
-      navigator.clipboard.writeText(entry.url).then(() => {
+      copyText(entry.url).then(() => {
         copyBtn.classList.add('copied');
         setTimeout(() => copyBtn.classList.remove('copied'), 1800);
       });
@@ -2031,7 +2050,7 @@ function renderHistoryDropdown() {
     shareBtn.onclick = (e) => {
       e.stopPropagation();
       const base = (window.location.origin + window.location.pathname).replace(/\/$/, '/');
-      navigator.clipboard.writeText(base + '?webhookurl=' + entry.url).then(() => {
+      copyText(base + '?webhookurl=' + entry.url).then(() => {
         shareBtn.classList.add('copied');
         setTimeout(() => shareBtn.classList.remove('copied'), 1800);
       });
@@ -2058,7 +2077,8 @@ function renderHistoryDropdown() {
 
     const actions = document.createElement('div');
     actions.className = 'wh-actions';
-    actions.append(row1, row2);
+    if (CFG_SHOW_CHECK_BTN) actions.append(row1);
+    actions.append(row2);
 
     meta.append(badge, time, dot);
 
@@ -2187,7 +2207,7 @@ function appendMessage(role, text) {
     copyBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
     copyBtn.onclick = () => {
       const txt = bubble.innerText || bubble.textContent;
-      navigator.clipboard.writeText(txt).then(() => toast(t('toastCopiedMsg')));
+      copyText(txt).then(() => toast(t('toastCopiedMsg')));
     };
     bubble.appendChild(copyBtn);
   } else {
@@ -2234,7 +2254,7 @@ function appendDebug(row, debugData) {
     `<button class="dbg-copy" title="Copy debug">${SVG_COPY}</button>`;
   summary.querySelector('.dbg-copy').addEventListener('click', e => {
     e.preventDefault(); e.stopPropagation();
-    navigator.clipboard.writeText(content).then(() => toast('📋 Debug copied'));
+    copyText(content).then(() => toast('📋 Debug copied'));
   });
 
   const isJsonContent = typeof debugData !== 'string';
@@ -2601,7 +2621,7 @@ function undoDelete() {
 }
 
 function copySession() {
-  navigator.clipboard.writeText(sessionId)
+  copyText(sessionId)
     .then(() => toast(t('toastCopied')))
     .catch(() => toast('🔑 ' + sessionId.slice(0,14) + '…'));
 }
